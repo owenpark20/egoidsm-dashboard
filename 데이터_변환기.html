@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>에고이즘 데이터 변환기</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+:root { --accent: #6366f1; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Pretendard', -apple-system, sans-serif; background:#f0f2f5; color:#1a1a2e; min-height:100vh; padding:24px; }
+.container { max-width:900px; margin:0 auto; }
+h1 { font-size:22px; font-weight:700; margin-bottom:4px; }
+.sub { font-size:13px; color:#6b7280; margin-bottom:24px; }
+.card { background:white; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.06); margin-bottom:16px; }
+.card h2 { font-size:15px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.step-num { background:var(--accent); color:white; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
+
+/* Drop zone */
+.drop-zone { border:2px dashed #d1d5db; border-radius:8px; padding:40px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.drop-zone:hover, .drop-zone.drag-over { border-color:var(--accent); background:#eef2ff; }
+.drop-zone input { display:none; }
+.drop-zone p { font-size:14px; color:#6b7280; margin-top:8px; }
+.drop-zone .icon { font-size:36px; }
+
+/* Info */
+.info { background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:12px 16px; font-size:13px; color:#166534; margin-top:12px; display:none; }
+.info.show { display:block; }
+.info.error { background:#fef2f2; border-color:#fca5a5; color:#991b1b; }
+
+/* Date filter */
+.date-filter { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+.date-filter label { font-size:13px; color:#374151; }
+.date-filter input[type="date"] { padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }
+.date-filter button { padding:6px 16px; background:var(--accent); color:white; border:none; border-radius:6px; font-size:13px; cursor:pointer; }
+.date-filter button:hover { background:#4f46e5; }
+
+/* Output */
+.output-area { margin-top:12px; }
+textarea { width:100%; height:200px; border:1px solid #d1d5db; border-radius:8px; padding:12px; font-size:12px; font-family:'Consolas', monospace; resize:vertical; }
+.btn-row { display:flex; gap:8px; margin-top:8px; }
+.btn { padding:8px 20px; border:none; border-radius:6px; font-size:13px; cursor:pointer; font-weight:500; }
+.btn-primary { background:var(--accent); color:white; }
+.btn-primary:hover { background:#4f46e5; }
+.btn-secondary { background:#e5e7eb; color:#374151; }
+.btn-secondary:hover { background:#d1d5db; }
+.btn-green { background:#10b981; color:white; }
+.btn-green:hover { background:#059669; }
+
+/* Stats */
+.stats { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; }
+.stat { background:#f9fafb; border-radius:8px; padding:12px 16px; }
+.stat .label { font-size:11px; color:#6b7280; text-transform:uppercase; }
+.stat .value { font-size:20px; font-weight:700; color:var(--accent); }
+
+/* Guide */
+.guide { font-size:13px; color:#4b5563; line-height:1.8; }
+.guide strong { color:#1a1a2e; }
+.guide ol { padding-left:20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>에고이즘 엑셀 → 대시보드 데이터 변환기</h1>
+    <div class="sub">엑셀 파일의 가로형 데이터를 대시보드용 세로형(CSV)으로 변환합니다</div>
+
+    <!-- Step 1: Upload -->
+    <div class="card">
+        <h2><span class="step-num">1</span> 엑셀 파일 선택</h2>
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="icon">📂</div>
+            <p>엑셀 파일을 드래그하거나 클릭해서 선택하세요</p>
+            <p style="font-size:12px;color:#9ca3af;">브랜드별 결제금액 현황_*.xlsx</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+        </div>
+        <div class="info" id="fileInfo"></div>
+    </div>
+
+    <!-- Step 2: Date Filter -->
+    <div class="card" id="step2" style="display:none;">
+        <h2><span class="step-num">2</span> 변환할 날짜 범위 선택</h2>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:8px;">새로 추가된 데이터만 변환하려면 시작일을 설정하세요. 전체를 변환하려면 그대로 두세요.</p>
+        <div class="date-filter">
+            <label>시작일</label>
+            <input type="date" id="filterStart">
+            <label>~</label>
+            <label>종료일</label>
+            <input type="date" id="filterEnd">
+            <button onclick="convertData()">변환하기</button>
+        </div>
+        <div class="stats" id="stats" style="display:none;"></div>
+    </div>
+
+    <!-- Step 3: Output -->
+    <div class="card" id="step3" style="display:none;">
+        <h2><span class="step-num">3</span> 변환 결과</h2>
+        <div class="output-area">
+            <textarea id="output" readonly></textarea>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="copyToClipboard()">📋 클립보드 복사</button>
+                <button class="btn btn-green" onclick="downloadCSV()">💾 CSV 다운로드</button>
+                <button class="btn btn-secondary" onclick="copyHeaderOnly()">헤더만 복사</button>
+            </div>
+        </div>
+        <div class="info show" style="margin-top:12px;background:#eef2ff;border-color:#a5b4fc;color:#3730a3;">
+            <strong>Google Sheets에 붙여넣는 방법:</strong><br>
+            1. "클립보드 복사" 클릭<br>
+            2. Google Sheets 열기 → 기존 데이터 맨 아래 빈 행 클릭<br>
+            3. <strong>Ctrl+Shift+V</strong> (서식 없이 붙여넣기)<br>
+            <br>
+            처음이라면 "CSV 다운로드" → Google Sheets에서 파일 → 가져오기로 시작하세요
+        </div>
+    </div>
+
+    <!-- Guide -->
+    <div class="card">
+        <h2>💡 매일 업데이트 방법</h2>
+        <div class="guide">
+            <ol>
+                <li>엑셀에 새 날짜 데이터를 추가합니다 (기존 방식대로)</li>
+                <li>이 변환기에 엑셀 파일을 넣고, <strong>시작일을 오늘(새로 추가한 날짜)</strong>로 설정합니다</li>
+                <li>"변환하기" → "클립보드 복사" 클릭</li>
+                <li>Google Sheets 맨 아래에 <strong>Ctrl+Shift+V</strong>로 붙여넣기</li>
+                <li>대시보드를 새로고침하면 자동 반영됩니다</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+const BRAND_SHEETS = ['미뇽맨션', '바쏠', '휴그', '굴뚝강아지'];
+let parsedData = []; // [{date, brand, channel, amount}]
+let allDates = [];
+
+// Drag & drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+
+function handleFile(file) {
+    if (!file) return;
+    const info = document.getElementById('fileInfo');
+    info.className = 'info show';
+    info.textContent = '파일 읽는 중...';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+            parseWorkbook(wb);
+            info.textContent = '✅ ' + file.name + ' — ' + parsedData.length.toLocaleString() + '건 데이터 감지';
+            info.className = 'info show';
+
+            // Set date range
+            if (allDates.length) {
+                document.getElementById('filterStart').value = allDates[0];
+                document.getElementById('filterEnd').value = allDates[allDates.length - 1];
+            }
+            document.getElementById('step2').style.display = 'block';
+        } catch(err) {
+            info.textContent = '❌ 파일 읽기 실패: ' + err.message;
+            info.className = 'info show error';
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function parseWorkbook(wb) {
+    parsedData = [];
+    const dateSet = new Set();
+
+    BRAND_SHEETS.forEach(brand => {
+        if (!wb.SheetNames.includes(brand)) return;
+        const ws = wb.Sheets[brand];
+        const data = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, dateNF:'yyyy-mm-dd'});
+        if (data.length < 2) return;
+
+        // Row 0 = dates, Row 1+ = channels
+        const headerRow = data[0];
+
+        for (let col = 1; col < headerRow.length; col++) {
+            let dateVal = headerRow[col];
+            let dateStr = '';
+            if (dateVal instanceof Date) {
+                dateStr = dateVal.toISOString().slice(0, 10);
+            } else if (typeof dateVal === 'number') {
+                // Excel serial date
+                const d = XLSX.SSF.parse_date_code(dateVal);
+                dateStr = d.y + '-' + String(d.m).padStart(2,'0') + '-' + String(d.d).padStart(2,'0');
+            } else if (typeof dateVal === 'string') {
+                dateStr = dateVal.slice(0, 10);
+            }
+            if (!dateStr || dateStr.length < 10) continue;
+
+            for (let row = 1; row < data.length; row++) {
+                const channel = data[row][0];
+                if (!channel || channel === '전체') continue;
+                const amount = parseInt(data[row][col]) || 0;
+                if (amount === 0) continue;
+
+                parsedData.push({date: dateStr, brand, channel, amount});
+                dateSet.add(dateStr);
+            }
+        }
+    });
+
+    allDates = [...dateSet].sort();
+}
+
+function convertData() {
+    const startDate = document.getElementById('filterStart').value;
+    const endDate = document.getElementById('filterEnd').value;
+
+    let filtered = parsedData;
+    if (startDate) filtered = filtered.filter(r => r.date >= startDate);
+    if (endDate) filtered = filtered.filter(r => r.date <= endDate);
+
+    // Sort
+    filtered.sort((a, b) => a.date.localeCompare(b.date) || a.brand.localeCompare(b.brand) || a.channel.localeCompare(b.channel));
+
+    // Stats
+    const dates = new Set(filtered.map(r => r.date));
+    const brands = new Set(filtered.map(r => r.brand));
+    const total = filtered.reduce((s, r) => s + r.amount, 0);
+    const statsEl = document.getElementById('stats');
+    statsEl.style.display = 'flex';
+    statsEl.innerHTML = `
+        <div class="stat"><div class="label">변환 건수</div><div class="value">${filtered.length.toLocaleString()}</div></div>
+        <div class="stat"><div class="label">날짜 범위</div><div class="value">${dates.size}일</div></div>
+        <div class="stat"><div class="label">브랜드</div><div class="value">${brands.size}개</div></div>
+        <div class="stat"><div class="label">총 금액</div><div class="value">${(total/1e8).toFixed(1)}억</div></div>
+    `;
+
+    // Generate CSV (without header for appending, with header option)
+    let csv = filtered.map(r => `${r.date},${r.brand},${r.channel},${r.amount}`).join('\n');
+
+    document.getElementById('output').value = csv;
+    document.getElementById('step3').style.display = 'block';
+
+    // Store for download
+    window._csvData = 'date,brand,channel,amount\n' + csv;
+    window._csvNoHeader = csv;
+}
+
+function copyToClipboard() {
+    const text = document.getElementById('output').value;
+    navigator.clipboard.writeText(text).then(() => {
+        alert('✅ 복사 완료!\n\nGoogle Sheets에서 맨 아래 빈 행을 클릭하고\nCtrl+Shift+V 로 붙여넣기 하세요.');
+    }).catch(() => {
+        document.getElementById('output').select();
+        document.execCommand('copy');
+        alert('✅ 복사 완료!');
+    });
+}
+
+function copyHeaderOnly() {
+    navigator.clipboard.writeText('date,brand,channel,amount').then(() => {
+        alert('✅ 헤더 복사 완료!\nGoogle Sheets 첫 행에 붙여넣기 하세요.');
+    });
+}
+
+function downloadCSV() {
+    const blob = new Blob(['\ufeff' + window._csvData], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dashboard_data_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
