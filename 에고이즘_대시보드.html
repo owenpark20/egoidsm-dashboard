@@ -91,6 +91,61 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 /* Footer */
 .footer { text-align:center; padding:16px; font-size:12px; color:var(--text2); }
 
+/* Alert System */
+.alert-section { background:var(--card); border-radius:var(--radius); padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.06); margin-bottom:var(--gap); }
+.alert-section h3 { font-size:16px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.alert-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.alert-header h3 { margin-bottom:0; }
+.btn-add-alert { padding:8px 18px; background:var(--accent); color:white; border:none; border-radius:6px; font-size:13px; cursor:pointer; font-weight:500; }
+.btn-add-alert:hover { background:#4f46e5; }
+
+/* Alert Form */
+.alert-form { background:#f9fafb; border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; display:none; }
+.alert-form.show { display:block; }
+.alert-form-row { display:flex; gap:10px; align-items:end; flex-wrap:wrap; margin-bottom:10px; }
+.alert-form-group { display:flex; flex-direction:column; gap:4px; }
+.alert-form-group label { font-size:11px; color:var(--text2); text-transform:uppercase; font-weight:600; }
+.alert-form-group select, .alert-form-group input { padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; min-width:120px; }
+.alert-form-group input[type="number"] { width:80px; }
+.alert-form-actions { display:flex; gap:8px; margin-top:8px; }
+.alert-form-actions button { padding:7px 16px; border:none; border-radius:6px; font-size:13px; cursor:pointer; }
+.btn-save-alert { background:var(--accent); color:white; }
+.btn-cancel-alert { background:#e5e7eb; color:#374151; }
+
+/* Alert List */
+.alert-list { display:flex; flex-direction:column; gap:8px; }
+.alert-item { display:flex; justify-content:space-between; align-items:center; background:#f9fafb; border:1px solid var(--border); border-radius:8px; padding:12px 16px; }
+.alert-item.triggered { border-color:#ef4444; background:#fef2f2; }
+.alert-item-info { flex:1; }
+.alert-item-name { font-weight:600; font-size:14px; margin-bottom:2px; }
+.alert-item-desc { font-size:12px; color:var(--text2); }
+.alert-item-status { font-size:11px; padding:3px 8px; border-radius:12px; font-weight:500; margin-left:12px; white-space:nowrap; }
+.alert-item-status.ok { background:#d1fae5; color:#065f46; }
+.alert-item-status.triggered { background:#fee2e2; color:#991b1b; }
+.alert-item-status.pending { background:#e5e7eb; color:#6b7280; }
+.alert-item-actions { display:flex; gap:6px; margin-left:12px; }
+.alert-item-actions button { padding:4px 10px; border:none; border-radius:4px; font-size:12px; cursor:pointer; background:#e5e7eb; color:#374151; }
+.alert-item-actions button:hover { background:#d1d5db; }
+.alert-item-actions button.del:hover { background:#fee2e2; color:#991b1b; }
+
+/* Alert Results */
+.alert-results { margin-top:16px; }
+.alert-results h4 { font-size:13px; font-weight:600; margin-bottom:8px; color:var(--text2); }
+.alert-triggered-list { display:flex; flex-direction:column; gap:6px; }
+.alert-triggered-item { display:flex; align-items:center; gap:8px; padding:10px 14px; background:#fef2f2; border:1px solid #fca5a5; border-radius:8px; font-size:13px; }
+.alert-triggered-item .icon { font-size:16px; }
+.alert-no-trigger { padding:12px; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; font-size:13px; color:#166534; text-align:center; }
+
+/* Slack Config */
+.slack-config { margin-top:16px; padding:12px 16px; background:#faf5ff; border:1px solid #c4b5fd; border-radius:8px; }
+.slack-config summary { font-size:13px; font-weight:600; color:#5b21b6; cursor:pointer; }
+.slack-config-inner { margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.slack-config-inner input { flex:1; padding:7px 10px; border:1px solid #c4b5fd; border-radius:6px; font-size:13px; min-width:250px; }
+.slack-config-inner button { padding:7px 14px; background:#7c3aed; color:white; border:none; border-radius:6px; font-size:13px; cursor:pointer; }
+.slack-config-inner button:hover { background:#6d28d9; }
+.slack-test-btn { padding:7px 14px; background:#e9d5ff; color:#7c3aed; border:none; border-radius:6px; font-size:13px; cursor:pointer; }
+.slack-test-btn:hover { background:#ddd6fe; }
+
 /* Loading */
 .loading-overlay { position:fixed; inset:0; background:rgba(255,255,255,0.9); display:flex; align-items:center; justify-content:center; z-index:1000; flex-direction:column; gap:12px; }
 .spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
@@ -289,6 +344,91 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
             <h3>브랜드 점유율 변화</h3>
             <canvas id="chartShare"></canvas>
         </div>
+    </div>
+
+    <!-- Alert System -->
+    <div class="alert-section" id="alertSection">
+        <div class="alert-header">
+            <h3>🔔 매출 알람 설정</h3>
+            <button class="btn-add-alert" onclick="showAlertForm()">+ 규칙 추가</button>
+        </div>
+
+        <!-- Alert Form -->
+        <div class="alert-form" id="alertForm">
+            <div class="alert-form-row">
+                <div class="alert-form-group">
+                    <label>규칙 이름</label>
+                    <input type="text" id="alertName" placeholder="예: 굴뚝강아지 카카오 급감">
+                </div>
+                <div class="alert-form-group">
+                    <label>브랜드</label>
+                    <select id="alertBrand"><option value="전체">전체</option></select>
+                </div>
+                <div class="alert-form-group">
+                    <label>채널</label>
+                    <select id="alertChannel"><option value="전체">전체</option></select>
+                </div>
+            </div>
+            <div class="alert-form-row">
+                <div class="alert-form-group">
+                    <label>비교 기준</label>
+                    <select id="alertCompare">
+                        <option value="7d">7일 전 대비</option>
+                        <option value="14d">14일 전 대비</option>
+                        <option value="30d">30일 전 대비</option>
+                        <option value="prev_month">전월 동일 대비</option>
+                        <option value="target">목표 금액 기준</option>
+                    </select>
+                </div>
+                <div class="alert-form-group">
+                    <label>조건</label>
+                    <select id="alertCondition">
+                        <option value="drop">하락 시</option>
+                        <option value="rise">상승 시</option>
+                        <option value="below">미만 시</option>
+                        <option value="above">이상 시</option>
+                    </select>
+                </div>
+                <div class="alert-form-group">
+                    <label>기준값</label>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <input type="number" id="alertThreshold" value="10" min="0">
+                        <span id="alertUnit" style="font-size:13px;color:var(--text2);">%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="alert-form-actions">
+                <button class="btn-save-alert" onclick="saveAlert()">저장</button>
+                <button class="btn-cancel-alert" onclick="hideAlertForm()">취소</button>
+            </div>
+        </div>
+
+        <!-- Alert List -->
+        <div class="alert-list" id="alertList">
+            <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px;">
+                아직 설정된 알람 규칙이 없습니다. "규칙 추가" 버튼을 눌러 시작하세요.
+            </div>
+        </div>
+
+        <!-- Alert Check Results -->
+        <div class="alert-results" id="alertResults" style="display:none;">
+            <h4>최근 체크 결과</h4>
+            <div id="alertResultList"></div>
+        </div>
+
+        <!-- Slack Webhook Config -->
+        <details class="slack-config">
+            <summary>Slack 알림 설정</summary>
+            <div class="slack-config-inner">
+                <input type="text" id="slackWebhook" placeholder="Slack Incoming Webhook URL (https://hooks.slack.com/services/...)">
+                <button onclick="saveSlackWebhook()">저장</button>
+                <button class="slack-test-btn" onclick="testSlackAlert()">테스트 전송</button>
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-top:6px;">
+                Slack 앱에서 Incoming Webhook을 만든 후 URL을 붙여넣으세요.
+                알람 조건 충족 시 자동으로 Slack에 알림이 갑니다.
+            </div>
+        </details>
     </div>
 
     <div class="footer">
@@ -1346,6 +1486,282 @@ function updateFooter() {
         el.textContent = `데이터 기간: ${dates[0]} ~ ${dates[dates.length-1]} | ${RAW_DATA.length.toLocaleString()}건`;
     }
 }
+
+// ============================================================
+// ALERT SYSTEM
+// ============================================================
+const ALERT_STORAGE_KEY = 'EGOIDSM_ALERTS';
+const SLACK_WEBHOOK_KEY = 'EGOIDSM_SLACK_WEBHOOK';
+
+function loadAlerts() {
+    try { return JSON.parse(localStorage.getItem(ALERT_STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveAlerts(alerts) {
+    localStorage.setItem(ALERT_STORAGE_KEY, JSON.stringify(alerts));
+}
+
+function showAlertForm(editIdx) {
+    const form = document.getElementById('alertForm');
+    form.classList.add('show');
+    // Populate brand/channel dropdowns from data
+    const brands = [...new Set(RAW_DATA.map(r=>r.brand))].sort();
+    const channels = [...new Set(RAW_DATA.map(r=>r.channel))].sort();
+    const bSel = document.getElementById('alertBrand');
+    const cSel = document.getElementById('alertChannel');
+    bSel.innerHTML = '<option value="전체">전체</option>' + brands.map(b=>`<option value="${b}">${b}</option>`).join('');
+    cSel.innerHTML = '<option value="전체">전체</option>' + channels.map(c=>`<option value="${c}">${c}</option>`).join('');
+
+    if (editIdx !== undefined) {
+        const a = loadAlerts()[editIdx];
+        if (a) {
+            document.getElementById('alertName').value = a.name;
+            bSel.value = a.brand;
+            cSel.value = a.channel;
+            document.getElementById('alertCompare').value = a.compare;
+            document.getElementById('alertCondition').value = a.condition;
+            document.getElementById('alertThreshold').value = a.threshold;
+            form.dataset.editIdx = editIdx;
+        }
+    } else {
+        document.getElementById('alertName').value = '';
+        document.getElementById('alertThreshold').value = 10;
+        delete form.dataset.editIdx;
+    }
+    updateAlertUnit();
+}
+function hideAlertForm() {
+    document.getElementById('alertForm').classList.remove('show');
+    delete document.getElementById('alertForm').dataset.editIdx;
+}
+
+// 조건에 따라 단위 표시 변경
+document.getElementById('alertCompare').addEventListener('change', updateAlertUnit);
+document.getElementById('alertCondition').addEventListener('change', updateAlertUnit);
+function updateAlertUnit() {
+    const cond = document.getElementById('alertCondition').value;
+    const unit = document.getElementById('alertUnit');
+    if (cond === 'below' || cond === 'above') {
+        unit.textContent = '원';
+    } else {
+        unit.textContent = '%';
+    }
+}
+
+function saveAlert() {
+    const name = document.getElementById('alertName').value.trim();
+    const brand = document.getElementById('alertBrand').value;
+    const channel = document.getElementById('alertChannel').value;
+    const compare = document.getElementById('alertCompare').value;
+    const condition = document.getElementById('alertCondition').value;
+    const threshold = parseFloat(document.getElementById('alertThreshold').value);
+
+    if (!name) { alert('규칙 이름을 입력하세요.'); return; }
+    if (isNaN(threshold)) { alert('기준값을 입력하세요.'); return; }
+
+    const alerts = loadAlerts();
+    const alertObj = { name, brand, channel, compare, condition, threshold, enabled: true, created: new Date().toISOString() };
+
+    const editIdx = document.getElementById('alertForm').dataset.editIdx;
+    if (editIdx !== undefined) {
+        alerts[parseInt(editIdx)] = alertObj;
+    } else {
+        alerts.push(alertObj);
+    }
+    saveAlerts(alerts);
+    hideAlertForm();
+    renderAlertList();
+}
+
+function deleteAlert(idx) {
+    if (!confirm('이 알람 규칙을 삭제하시겠습니까?')) return;
+    const alerts = loadAlerts();
+    alerts.splice(idx, 1);
+    saveAlerts(alerts);
+    renderAlertList();
+}
+
+function getCompareLabel(compare) {
+    const map = {'7d':'7일 전 대비','14d':'14일 전 대비','30d':'30일 전 대비','prev_month':'전월 동일 대비','target':'목표 금액'};
+    return map[compare] || compare;
+}
+function getConditionLabel(condition, threshold) {
+    const unit = (condition === 'below' || condition === 'above') ? '원' : '%';
+    const map = {'drop':`${threshold}% 이상 하락`,'rise':`${threshold}% 이상 상승`,'below':`${threshold.toLocaleString()}원 미만`,'above':`${threshold.toLocaleString()}원 이상`};
+    return map[condition] || condition;
+}
+
+function renderAlertList() {
+    const alerts = loadAlerts();
+    const list = document.getElementById('alertList');
+    if (alerts.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px;">아직 설정된 알람 규칙이 없습니다. "규칙 추가" 버튼을 눌러 시작하세요.</div>';
+        return;
+    }
+    list.innerHTML = alerts.map((a, i) => `
+        <div class="alert-item" id="alertItem${i}">
+            <div class="alert-item-info">
+                <div class="alert-item-name">${a.name}</div>
+                <div class="alert-item-desc">${a.brand} / ${a.channel} / ${getCompareLabel(a.compare)} / ${getConditionLabel(a.condition, a.threshold)}</div>
+            </div>
+            <span class="alert-item-status pending" id="alertStatus${i}">대기</span>
+            <div class="alert-item-actions">
+                <button onclick="showAlertForm(${i})">수정</button>
+                <button class="del" onclick="deleteAlert(${i})">삭제</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ============================================================
+// ALERT CHECK LOGIC
+// ============================================================
+function checkAlerts() {
+    const alerts = loadAlerts();
+    if (alerts.length === 0 || RAW_DATA.length === 0) return;
+
+    const allDates = [...new Set(RAW_DATA.map(r=>r.date))].sort();
+    const latestDate = allDates[allDates.length - 1];
+    const triggered = [];
+
+    alerts.forEach((a, i) => {
+        let filtered = RAW_DATA;
+        if (a.brand !== '전체') filtered = filtered.filter(r => r.brand === a.brand);
+        if (a.channel !== '전체') filtered = filtered.filter(r => r.channel === a.channel);
+
+        // 최신 날짜 매출
+        const currentAmount = filtered.filter(r => r.date === latestDate).reduce((s,r) => s + r.amount, 0);
+
+        let compareDate = '';
+        let compareAmount = 0;
+        let result = { triggered: false, message: '' };
+
+        if (a.compare === '7d' || a.compare === '14d' || a.compare === '30d') {
+            const days = parseInt(a.compare);
+            const d = new Date(latestDate);
+            d.setDate(d.getDate() - days);
+            compareDate = d.toISOString().slice(0,10);
+            compareAmount = filtered.filter(r => r.date === compareDate).reduce((s,r) => s + r.amount, 0);
+        } else if (a.compare === 'prev_month') {
+            const d = new Date(latestDate);
+            d.setMonth(d.getMonth() - 1);
+            compareDate = d.toISOString().slice(0,10);
+            compareAmount = filtered.filter(r => r.date === compareDate).reduce((s,r) => s + r.amount, 0);
+        }
+
+        if (a.condition === 'drop' && compareAmount > 0) {
+            const changeRate = ((currentAmount - compareAmount) / compareAmount) * 100;
+            if (changeRate <= -a.threshold) {
+                result = { triggered: true, message: `${a.name}: ${latestDate} 매출 ${currentAmount.toLocaleString()}원, ${getCompareLabel(a.compare)} ${changeRate.toFixed(1)}% 하락 (기준: ${a.threshold}%)` };
+            }
+        } else if (a.condition === 'rise' && compareAmount > 0) {
+            const changeRate = ((currentAmount - compareAmount) / compareAmount) * 100;
+            if (changeRate >= a.threshold) {
+                result = { triggered: true, message: `${a.name}: ${latestDate} 매출 ${currentAmount.toLocaleString()}원, ${getCompareLabel(a.compare)} +${changeRate.toFixed(1)}% 상승 (기준: ${a.threshold}%)` };
+            }
+        } else if (a.condition === 'below') {
+            if (currentAmount < a.threshold) {
+                result = { triggered: true, message: `${a.name}: ${latestDate} 매출 ${currentAmount.toLocaleString()}원 < 목표 ${a.threshold.toLocaleString()}원` };
+            }
+        } else if (a.condition === 'above') {
+            if (currentAmount >= a.threshold) {
+                result = { triggered: true, message: `${a.name}: ${latestDate} 매출 ${currentAmount.toLocaleString()}원 >= 목표 ${a.threshold.toLocaleString()}원` };
+            }
+        }
+
+        // UI 업데이트
+        const statusEl = document.getElementById('alertStatus' + i);
+        const itemEl = document.getElementById('alertItem' + i);
+        if (statusEl) {
+            if (compareAmount === 0 && (a.condition === 'drop' || a.condition === 'rise') && a.compare !== 'target') {
+                statusEl.textContent = '비교 데이터 없음';
+                statusEl.className = 'alert-item-status pending';
+            } else if (result.triggered) {
+                statusEl.textContent = '⚠ 발생';
+                statusEl.className = 'alert-item-status triggered';
+                if (itemEl) itemEl.classList.add('triggered');
+                triggered.push(result.message);
+            } else {
+                statusEl.textContent = '✓ 정상';
+                statusEl.className = 'alert-item-status ok';
+                if (itemEl) itemEl.classList.remove('triggered');
+            }
+        }
+    });
+
+    // Show results
+    const resultsDiv = document.getElementById('alertResults');
+    const resultList = document.getElementById('alertResultList');
+    resultsDiv.style.display = 'block';
+
+    if (triggered.length > 0) {
+        resultList.innerHTML = triggered.map(msg =>
+            `<div class="alert-triggered-item"><span class="icon">🚨</span> ${msg}</div>`
+        ).join('');
+        // Send to Slack
+        sendSlackAlerts(triggered);
+    } else {
+        resultList.innerHTML = '<div class="alert-no-trigger">✅ 모든 지표가 정상 범위입니다 (' + latestDate + ' 기준)</div>';
+    }
+}
+
+// ============================================================
+// SLACK INTEGRATION
+// ============================================================
+function saveSlackWebhook() {
+    const url = document.getElementById('slackWebhook').value.trim();
+    if (!url) { alert('Webhook URL을 입력하세요.'); return; }
+    localStorage.setItem(SLACK_WEBHOOK_KEY, url);
+    alert('✅ Slack Webhook URL 저장 완료!');
+}
+
+function loadSlackWebhook() {
+    const saved = localStorage.getItem(SLACK_WEBHOOK_KEY);
+    if (saved) document.getElementById('slackWebhook').value = saved;
+}
+
+function sendSlackAlerts(messages) {
+    const webhookUrl = localStorage.getItem(SLACK_WEBHOOK_KEY);
+    if (!webhookUrl) return;
+
+    const text = '🔔 *에고이즘 매출 알람*\n\n' + messages.map(m => '• ' + m).join('\n');
+
+    fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+    }).catch(err => console.log('Slack 전송 실패:', err));
+}
+
+function testSlackAlert() {
+    const webhookUrl = document.getElementById('slackWebhook').value.trim();
+    if (!webhookUrl) { alert('Webhook URL을 먼저 입력하세요.'); return; }
+
+    fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: '🔔 *에고이즘 대시보드 알람 테스트*\n\n이 메시지가 보이면 Slack 연동 성공입니다! ✅' })
+    }).then(r => {
+        if (r.ok) alert('✅ Slack 테스트 메시지 전송 성공!');
+        else alert('❌ 전송 실패: ' + r.status);
+    }).catch(err => alert('❌ 전송 실패: ' + err.message));
+}
+
+// ============================================================
+// ALERT INIT - hook into data load
+// ============================================================
+function initAlerts() {
+    renderAlertList();
+    loadSlackWebhook();
+    // Check alerts whenever data is loaded
+    if (RAW_DATA.length > 0) checkAlerts();
+}
+
+// Patch initDashboard to also init alerts
+const _origInitDashboard = initDashboard;
+initDashboard = function() {
+    _origInitDashboard();
+    initAlerts();
+};
 
 // ============================================================
 // BOOT
