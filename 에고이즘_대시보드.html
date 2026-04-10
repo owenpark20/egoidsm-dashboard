@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
 :root {
     --bg: #f0f2f5;
@@ -199,6 +200,7 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
                 </select>
             </div>
             <button class="btn-reset" onclick="resetFilters()">초기화</button>
+            <button class="btn-reset" onclick="exportExcel()" style="background:rgba(99,102,241,0.2);border-color:rgba(99,102,241,0.4);">📥 엑셀 다운로드</button>
         </div>
     </div>
 
@@ -1557,6 +1559,135 @@ function calcWeeklyRank() {
     });
 
     document.getElementById('rankCards').innerHTML = html;
+}
+
+// ============================================================
+// EXCEL EXPORT
+// ============================================================
+function exportExcel() {
+    if (!filteredData || filteredData.length === 0) {
+        alert('다운로드할 데이터가 없습니다.');
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+
+    // 필터 정보
+    const brand = document.getElementById('fBrand').value;
+    const channel = document.getElementById('fChannel').value;
+    const start = document.getElementById('fStart').value;
+    const end = document.getElementById('fEnd').value;
+    const brandLabel = brand === 'all' ? '전체' : brand;
+    const channelLabel = channel === 'all' ? '전체' : channel;
+
+    // 1) 전체 요약 시트
+    const summaryRows = [
+        ['에고이즘 결제액 데이터'],
+        ['다운로드 일시', new Date().toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})],
+        ['필터 - 브랜드', brandLabel],
+        ['필터 - 채널', channelLabel],
+        ['필터 - 기간', start + ' ~ ' + end],
+        ['총 데이터 수', filteredData.length + '건'],
+        [],
+        ['날짜', '브랜드', '채널', '결제액']
+    ];
+    // 날짜순 정렬
+    const sorted = [...filteredData].sort((a,b) => a.date.localeCompare(b.date) || a.brand.localeCompare(b.brand) || a.channel.localeCompare(b.channel));
+    sorted.forEach(r => summaryRows.push([r.date, r.brand, r.channel, r.amount]));
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    // 컬럼 너비 설정
+    wsSummary['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, wsSummary, '전체데이터');
+
+    // 2) 크로스탭(피벗) 시트 — 전체데이터 바로 다음에 배치
+    const pivotChannels = [...new Set(sorted.map(r => r.brand + ' | ' + r.channel))].sort();
+    const pivotDates = [...new Set(sorted.map(r => r.date))].sort();
+    const pivotHeader = ['채널', ...pivotDates.map(d => d.replace(/-/g,'').slice(2)), '합계'];
+    const pivotRows = [pivotHeader];
+    const pivotMap = {};
+    sorted.forEach(r => {
+        const key = r.brand + ' | ' + r.channel;
+        if (!pivotMap[key]) pivotMap[key] = {};
+        pivotMap[key][r.date] = (pivotMap[key][r.date] || 0) + r.amount;
+    });
+    const pivotBrands = [...new Set(sorted.map(r => r.brand))].sort();
+    pivotBrands.forEach(brand => {
+        const brandChannels = pivotChannels.filter(c => c.startsWith(brand + ' | '));
+        let brandDateTotals = {};
+        brandChannels.forEach(ch => {
+            const row = [ch];
+            let rowTotal = 0;
+            pivotDates.forEach(d => {
+                const val = (pivotMap[ch] && pivotMap[ch][d]) || 0;
+                row.push(val);
+                rowTotal += val;
+                brandDateTotals[d] = (brandDateTotals[d] || 0) + val;
+            });
+            row.push(rowTotal);
+            pivotRows.push(row);
+        });
+        const subtotalRow = ['⊕ ' + brand + ' 소계'];
+        let brandTotal = 0;
+        pivotDates.forEach(d => {
+            const val = brandDateTotals[d] || 0;
+            subtotalRow.push(val);
+            brandTotal += val;
+        });
+        subtotalRow.push(brandTotal);
+        pivotRows.push(subtotalRow);
+        pivotRows.push([]);
+    });
+    const grandRow = ['■ 전체 합계'];
+    let grandTotal = 0;
+    pivotDates.forEach(d => {
+        const daySum = sorted.filter(r => r.date === d).reduce((s,r) => s + r.amount, 0);
+        grandRow.push(daySum);
+        grandTotal += daySum;
+    });
+    grandRow.push(grandTotal);
+    pivotRows.push(grandRow);
+    const wsPivot = XLSX.utils.aoa_to_sheet(pivotRows);
+    const pivotCols = [{ wch: 28 }];
+    pivotDates.forEach(() => pivotCols.push({ wch: 12 }));
+    pivotCols.push({ wch: 14 });
+    wsPivot['!cols'] = pivotCols;
+    XLSX.utils.book_append_sheet(wb, wsPivot, '크로스탭');
+
+    // 3) 날짜별 시트
+    const dates = [...new Set(filteredData.map(r => r.date))].sort();
+    dates.forEach(date => {
+        const dayData = filteredData.filter(r => r.date === date)
+            .sort((a,b) => a.brand.localeCompare(b.brand) || a.channel.localeCompare(b.channel));
+
+        const dayTotal = dayData.reduce((s,r) => s + r.amount, 0);
+        const rows = [
+            [date + ' 결제액 상세'],
+            ['총 결제액', dayTotal],
+            [],
+            ['브랜드', '채널', '결제액']
+        ];
+        dayData.forEach(r => rows.push([r.brand, r.channel, r.amount]));
+
+        // 브랜드별 소계
+        rows.push([]);
+        rows.push(['[브랜드별 소계]']);
+        const brands = [...new Set(dayData.map(r => r.brand))].sort();
+        brands.forEach(b => {
+            const bTotal = dayData.filter(r => r.brand === b).reduce((s,r) => s + r.amount, 0);
+            rows.push([b, '', bTotal]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 15 }];
+        // 시트이름 최대 31자, 특수문자 제거
+        const sheetName = date.replace(/-/g, '');
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    // 파일명 생성
+    const fileName = '에고이즘_결제액_' + brandLabel + '_' + start.replace(/-/g,'') + '-' + end.replace(/-/g,'') + '.xlsx';
+    XLSX.writeFile(wb, fileName);
 }
 
 // Patch initDashboard to also calc weekly rank
