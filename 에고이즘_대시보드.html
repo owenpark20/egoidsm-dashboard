@@ -17,8 +17,8 @@
     --text: #1a1a2e;
     --text2: #6b7280;
     --text-light: #ffffff;
-    --accent: #6366f1;
-    --positive: #10b981;
+    --accent: #6C8BD5;
+    --positive: #5FAF9B;
     --negative: #ef4444;
     --border: #e5e7eb;
     --gap: 16px;
@@ -34,11 +34,11 @@ body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI',
 .header h1 { font-size:22px; font-weight:700; }
 .header .subtitle { font-size:13px; opacity:0.7; }
 .data-status { font-size:12px; padding:4px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px; }
-.data-status.live { background:rgba(16,185,129,0.2); color:#6ee7b7; }
+.data-status.live { background:rgba(95,175,155,0.2); color:#6ee7b7; }
 .data-status.embedded { background:rgba(251,191,36,0.2); color:#fcd34d; }
 .data-status .dot { width:6px; height:6px; border-radius:50%; }
-.data-status.live .dot { background:#10b981; animation: pulse 2s infinite; }
-.data-status.embedded .dot { background:#f59e0b; }
+.data-status.live .dot { background:#5FAF9B; animation: pulse 2s infinite; }
+.data-status.embedded .dot { background:#E8A863; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
 /* Filters */
@@ -54,6 +54,52 @@ body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI',
 .filter-group input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(1); }
 .btn-reset { padding:7px 16px; border:1px solid rgba(255,255,255,0.2); border-radius:6px; background:transparent; color:var(--text-light); font-size:13px; cursor:pointer; align-self:end; transition:background 0.2s; }
 .btn-reset:hover { background:rgba(255,255,255,0.1); }
+.date-preset-wrap { position:relative; align-self:end; }
+.btn-preset { padding:7px 14px; border:1px solid rgba(108,139,213,0.5); border-radius:6px; background:rgba(108,139,213,0.15); color:var(--text-light); font-size:13px; cursor:pointer; transition:background 0.2s; white-space:nowrap; }
+.btn-preset:hover { background:rgba(108,139,213,0.3); }
+.preset-dropdown { display:none; position:absolute; top:calc(100% + 6px); right:0; background:#1e1e3a; border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px; z-index:999; width:420px; max-height:520px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+.preset-dropdown.show { display:flex; flex-direction:column; gap:6px; }
+.preset-dropdown::-webkit-scrollbar { width:4px; }
+.preset-dropdown::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:2px; }
+.preset-section-label { font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.5px; padding:4px 4px 2px; }
+.preset-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+.preset-btn { padding:8px 10px; border:none; border-radius:6px; background:transparent; color:rgba(255,255,255,0.85); font-size:13px; cursor:pointer; text-align:center; transition:background 0.15s; white-space:nowrap; }
+.preset-btn:hover { background:rgba(108,139,213,0.25); color:#fff; }
+.preset-btn.full { grid-column: 1 / -1; }
+.preset-grid.month-grid { grid-template-columns:repeat(4,1fr); gap:3px; }
+.preset-grid.month-grid .preset-btn { padding:6px 4px; font-size:12px; }
+
+/* Period Compare */
+.compare-wrap { background:var(--card); border-radius:var(--radius); padding:20px; margin-bottom:var(--gap); }
+.compare-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.compare-header h3 { font-size:16px; font-weight:700; }
+.compare-slots { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.compare-slot { display:flex; align-items:center; gap:0; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:7px 8px; font-size:13px; }
+.compare-slot .slot-label { font-weight:600; min-width:16px; text-align:center; font-size:14px; margin:0; }
+.compare-slot input[type="date"] { border:none; background:transparent; font-size:13px; color:var(--text); outline:none; width:108px; padding:0; margin:0; }
+.compare-slot .cmp-preset-wrap { margin:0; }
+.compare-slot .slot-remove { background:none; border:none; color:var(--negative); cursor:pointer; font-size:14px; padding:0 2px; line-height:1; }
+.compare-slot .slot-remove:hover { opacity:0.7; }
+.cmp-preset-wrap { position:relative; }
+.btn-cmp-preset { padding:4px 8px; border:1px dashed var(--border); border-radius:5px; background:transparent; color:var(--text2); font-size:11px; cursor:pointer; white-space:nowrap; }
+.btn-cmp-preset:hover { border-color:var(--accent); color:var(--accent); }
+.cmp-preset-dd { display:none; position:absolute; top:calc(100% + 4px); left:0; background:#fff; border:1px solid var(--border); border-radius:10px; padding:8px; z-index:1000; width:280px; box-shadow:0 8px 20px rgba(0,0,0,0.15); max-height:380px; overflow-y:auto; }
+.cmp-preset-dd.show { display:flex; flex-direction:column; gap:4px; }
+.cmp-preset-dd::-webkit-scrollbar { width:4px; }
+.cmp-preset-dd::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.15); border-radius:2px; }
+.cmp-preset-dd .preset-section-label { color:var(--text2); }
+.cmp-preset-dd .preset-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px; }
+.cmp-preset-dd .preset-btn { color:var(--text); font-size:12px; padding:6px 8px; text-align:center; }
+.cmp-preset-dd .preset-btn:hover { background:rgba(108,139,213,0.1); }
+.cmp-preset-dd .preset-btn.full { grid-column: 1 / -1; }
+.cmp-preset-dd .preset-grid.month-grid { grid-template-columns:repeat(4,1fr); }
+.cmp-preset-dd .preset-grid.month-grid .preset-btn { padding:5px 3px; font-size:11px; }
+.btn-add-period { padding:6px 12px; border:1px dashed var(--border); border-radius:8px; background:transparent; color:var(--text2); font-size:12px; cursor:pointer; transition:all 0.2s; }
+.btn-add-period:hover { border-color:var(--accent); color:var(--accent); }
+.btn-compare { padding:6px 14px; border:none; border-radius:8px; background:var(--accent); color:#fff; font-size:12px; font-weight:600; cursor:pointer; transition:background 0.2s; }
+.btn-compare:hover { opacity:0.85; }
+.compare-chart-area { position:relative; height:320px; }
+.compare-empty { display:flex; align-items:center; justify-content:center; height:200px; color:var(--text2); font-size:14px; }
 
 /* KPI */
 .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--gap); margin-bottom:var(--gap); }
@@ -119,7 +165,7 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .loading-text { font-size:14px; color:var(--text2); }
 
 /* Google Sheets Config */
-.config-banner { background:linear-gradient(135deg,#fef3c7,#fde68a); border:1px solid #f59e0b; border-radius:var(--radius); padding:16px 20px; margin-bottom:var(--gap); display:flex; align-items:center; gap:12px; }
+.config-banner { background:linear-gradient(135deg,#fef3c7,#fde68a); border:1px solid #E8A863; border-radius:var(--radius); padding:16px 20px; margin-bottom:var(--gap); display:flex; align-items:center; gap:12px; }
 .config-banner.hidden { display:none; }
 .config-banner input { flex:1; padding:8px 12px; border:1px solid #d97706; border-radius:6px; font-size:13px; }
 .config-banner button { padding:8px 16px; background:#d97706; color:white; border:none; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap; }
@@ -199,8 +245,62 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
                     <option value="quarterly">분기별</option>
                 </select>
             </div>
+            <div class="date-preset-wrap">
+                <button class="btn-preset" onclick="togglePreset(event)">📅 간편날짜</button>
+                <div class="preset-dropdown" id="presetDropdown">
+                    <div class="preset-section-label">빠른 선택</div>
+                    <div class="preset-grid">
+                        <button class="preset-btn" onclick="setPreset('yesterday')">어제</button>
+                        <button class="preset-btn" onclick="setPreset('last7')">최근 7일</button>
+                        <button class="preset-btn" onclick="setPreset('thisWeek')">이번주</button>
+                        <button class="preset-btn" onclick="setPreset('lastWeek')">지난주</button>
+                        <button class="preset-btn" onclick="setPreset('thisMonth')">이번달</button>
+                        <button class="preset-btn" onclick="setPreset('lastMonth')">지난달</button>
+                        <button class="preset-btn" onclick="setPreset('last14')">최근 14일</button>
+                        <button class="preset-btn" onclick="setPreset('last30')">최근 30일</button>
+                    </div>
+                    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:4px 0;">
+                    <div class="preset-section-label">26년 월별</div>
+                    <div class="preset-grid month-grid">
+                        <button class="preset-btn" onclick="setPreset('m2601')">1월</button>
+                        <button class="preset-btn" onclick="setPreset('m2602')">2월</button>
+                        <button class="preset-btn" onclick="setPreset('m2603')">3월</button>
+                        <button class="preset-btn" onclick="setPreset('m2604')">4월</button>
+                        <button class="preset-btn" onclick="setPreset('m2605')">5월</button>
+                        <button class="preset-btn" onclick="setPreset('m2606')">6월</button>
+                        <button class="preset-btn" onclick="setPreset('m2607')">7월</button>
+                        <button class="preset-btn" onclick="setPreset('m2608')">8월</button>
+                        <button class="preset-btn" onclick="setPreset('m2609')">9월</button>
+                        <button class="preset-btn" onclick="setPreset('m2610')">10월</button>
+                        <button class="preset-btn" onclick="setPreset('m2611')">11월</button>
+                        <button class="preset-btn" onclick="setPreset('m2612')">12월</button>
+                    </div>
+                    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:4px 0;">
+                    <div class="preset-section-label">올해</div>
+                    <div class="preset-grid">
+                        <button class="preset-btn full" onclick="setPreset('thisYear')">올해 전체</button>
+                        <button class="preset-btn" onclick="setPreset('thisFirstHalf')">올해 상반기</button>
+                        <button class="preset-btn" onclick="setPreset('thisSecondHalf')">올해 하반기</button>
+                        <button class="preset-btn" onclick="setPreset('thisQ1')">1분기</button>
+                        <button class="preset-btn" onclick="setPreset('thisQ2')">2분기</button>
+                        <button class="preset-btn" onclick="setPreset('thisQ3')">3분기</button>
+                        <button class="preset-btn" onclick="setPreset('thisQ4')">4분기</button>
+                    </div>
+                    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:4px 0;">
+                    <div class="preset-section-label">작년</div>
+                    <div class="preset-grid">
+                        <button class="preset-btn full" onclick="setPreset('lastYear')">작년 전체</button>
+                        <button class="preset-btn" onclick="setPreset('lastFirstHalf')">작년 상반기</button>
+                        <button class="preset-btn" onclick="setPreset('lastSecondHalf')">작년 하반기</button>
+                        <button class="preset-btn" onclick="setPreset('lastQ1')">1분기</button>
+                        <button class="preset-btn" onclick="setPreset('lastQ2')">2분기</button>
+                        <button class="preset-btn" onclick="setPreset('lastQ3')">3분기</button>
+                        <button class="preset-btn" onclick="setPreset('lastQ4')">4분기</button>
+                    </div>
+                </div>
+            </div>
             <button class="btn-reset" onclick="resetFilters()">초기화</button>
-            <button class="btn-reset" onclick="exportExcel()" style="background:rgba(99,102,241,0.2);border-color:rgba(99,102,241,0.4);">📥 엑셀 다운로드</button>
+            <button class="btn-reset" onclick="exportExcel()" style="background:rgba(108,139,213,0.2);border-color:rgba(108,139,213,0.4);">📥 엑셀 다운로드</button>
         </div>
     </div>
 
@@ -292,6 +392,50 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
         </div>
     </div>
 
+    <!-- Period Compare -->
+    <div class="compare-wrap" id="compareSection">
+        <div class="compare-header">
+            <h3>📊 기간별 비교</h3>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <div class="chart-toggle" id="compareChartToggle">
+                    <button class="active" onclick="setCompareChart('line',this)">꺾은선</button>
+                    <button onclick="setCompareChart('bar',this)">막대</button>
+                </div>
+                <div class="chart-toggle" id="compareBucketToggle">
+                    <button onclick="setCompareBucket('day',this)">일별</button>
+                    <button onclick="setCompareBucket('week',this)">주별</button>
+                    <button class="active" onclick="setCompareBucket('month',this)">월별</button>
+                </div>
+                <select id="cmpFilterBrand" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+                    <option value="all">전체 브랜드</option>
+                </select>
+                <select id="cmpFilterChannel" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+                    <option value="all">전체 채널</option>
+                </select>
+                <button class="btn-compare" onclick="runCompare()">비교하기</button>
+            </div>
+        </div>
+        <div class="compare-slots" id="compareSlots">
+            <div class="compare-slot" data-idx="0">
+                <span class="slot-label" style="color:#6C8BD5;">A</span>
+                <input type="date" class="cmp-start" data-idx="0"> ~ <input type="date" class="cmp-end" data-idx="0">
+                <div class="cmp-preset-wrap"><button class="btn-cmp-preset" onclick="toggleCmpPreset(0,event)">간편날짜</button><div class="cmp-preset-dd" id="cmpPresetDD0"></div></div>
+            </div>
+            <div class="compare-slot" data-idx="1">
+                <span class="slot-label" style="color:#E87C89;">B</span>
+                <input type="date" class="cmp-start" data-idx="1"> ~ <input type="date" class="cmp-end" data-idx="1">
+                <div class="cmp-preset-wrap"><button class="btn-cmp-preset" onclick="toggleCmpPreset(1,event)">간편날짜</button><div class="cmp-preset-dd" id="cmpPresetDD1"></div></div>
+            </div>
+            <button class="btn-add-period" id="btnAddPeriod" onclick="addCompareSlot()">+ 기간 추가</button>
+        </div>
+        <div style="margin-top:14px;">
+            <div class="compare-chart-area">
+                <canvas id="chartCompare"></canvas>
+                <div class="compare-empty" id="compareEmpty">위에서 기간을 설정하고 <b style="margin:0 4px;">비교하기</b>를 눌러주세요</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Charts Row 4 -->
     <div class="chart-row">
         <div class="chart-card">
@@ -334,13 +478,13 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 // ============================================================
 const GSHEET_KEY = 'EGOIDSM_SHEET_URL';
 const BRAND_COLORS = {
-    '미뇽맨션': '#6366f1',
-    '바쏠': '#f43f5e',
-    '휴그': '#10b981',
-    '굴뚝강아지': '#f59e0b'
+    '미뇽맨션': '#6C8BD5',
+    '바쏠': '#E87C89',
+    '휴그': '#5FAF9B',
+    '굴뚝강아지': '#E8A863'
 };
 const CHANNEL_COLORS = [
-    '#6366f1','#f43f5e','#10b981','#f59e0b','#8b5cf6','#ec4899',
+    '#6C8BD5','#E87C89','#5FAF9B','#E8A863','#8b5cf6','#ec4899',
     '#14b8a6','#f97316','#3b82f6','#84cc16','#a855f7','#06b6d4',
     '#e11d48','#22c55e','#eab308','#64748b'
 ];
@@ -485,6 +629,18 @@ function populateFilters() {
     brands.forEach(b => { const o=document.createElement('option'); o.value=b; o.textContent=b; fBrand.appendChild(o); });
     channels.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; fChannel.appendChild(o); });
 
+    // 비교 차트용 필터 드롭다운도 같이 채움
+    const cmpBrand = document.getElementById('cmpFilterBrand');
+    const cmpChannel = document.getElementById('cmpFilterChannel');
+    if (cmpBrand) {
+        cmpBrand.innerHTML = '<option value="all">전체 브랜드</option>';
+        brands.forEach(b => { const o=document.createElement('option'); o.value=b; o.textContent=b; cmpBrand.appendChild(o); });
+    }
+    if (cmpChannel) {
+        cmpChannel.innerHTML = '<option value="all">전체 채널</option>';
+        channels.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; cmpChannel.appendChild(o); });
+    }
+
     // 종료일: 항상 현재 서울 날짜
     const seoulNow = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
     const seoulToday = seoulNow.getFullYear() + '-' + String(seoulNow.getMonth()+1).padStart(2,'0') + '-' + String(seoulNow.getDate()).padStart(2,'0');
@@ -492,6 +648,27 @@ function populateFilters() {
         document.getElementById('fStart').value = dates[0];
         document.getElementById('fEnd').value = seoulToday;
     }
+}
+
+// ============================================================
+// DATE PRESET (간편설정)
+// ============================================================
+function togglePreset(e) {
+    e.stopPropagation();
+    document.getElementById('presetDropdown').classList.toggle('show');
+}
+document.addEventListener('click', function(e) {
+    const dd = document.getElementById('presetDropdown');
+    if (dd && !dd.contains(e.target)) dd.classList.remove('show');
+});
+
+function setPreset(type) {
+    const range = calcPresetRange(type);
+    if (!range) return;
+    document.getElementById('fStart').value = range.s;
+    document.getElementById('fEnd').value = range.e;
+    document.getElementById('presetDropdown').classList.remove('show');
+    applyFilters();
 }
 
 function resetFilters() {
@@ -743,14 +920,14 @@ function renderTrendChart() {
         const values = keys.map(k=>grouped[k]);
 
         const avg = values.length > 0 ? values.reduce((s,v)=>s+v,0) / values.length : 0;
-        const barBg = values.map(v => v >= avg ? '#6366f1cc' : '#6366f180');
-        const barBorder = values.map(v => v >= avg ? '#6366f1' : '#6366f1aa');
+        const barBg = values.map(v => v >= avg ? '#6C8BD5cc' : '#6C8BD580');
+        const barBorder = values.map(v => v >= avg ? '#6C8BD5' : '#6C8BD5aa');
 
         const datasets = [{
             label: '결제금액',
             data: values,
-            backgroundColor: showAvgLine.trend ? barBg : '#6366f1cc',
-            borderColor: showAvgLine.trend ? barBorder : '#6366f1',
+            backgroundColor: showAvgLine.trend ? barBg : '#6C8BD5cc',
+            borderColor: showAvgLine.trend ? barBorder : '#6C8BD5',
             borderWidth: 1,
             borderRadius: 4,
             order: 2,
@@ -762,7 +939,7 @@ function renderTrendChart() {
                 label: '평균 (' + fmt(Math.round(avg)) + '원)',
                 data: values.map(() => Math.round(avg)),
                 type: 'line',
-                borderColor: '#f59e0b',
+                borderColor: '#E8A863',
                 backgroundColor: 'transparent',
                 borderWidth: 2,
                 borderDash: [4, 4],
@@ -780,7 +957,7 @@ function renderTrendChart() {
                 label: '추세선',
                 data: linearRegression(adjValues),
                 type: 'line',
-                borderColor: '#f43f5e',
+                borderColor: '#E87C89',
                 backgroundColor: 'transparent',
                 borderWidth: 2.5,
                 borderDash: [8, 4],
@@ -1069,17 +1246,17 @@ function renderDowChart() {
     // 평균 기준 색상: 평균 이상=진한색, 미만=연한색 (주말은 빨강 계열 유지)
     const barColors = dowAvg.map((v,i) => {
         if (showAvgLine.dow) {
-            if (i >= 5) return v >= dowOverallAvg ? '#f43f5ecc' : '#f43f5e55';
-            return v >= dowOverallAvg ? '#6366f1cc' : '#6366f155';
+            if (i >= 5) return v >= dowOverallAvg ? '#E87C89cc' : '#E87C8955';
+            return v >= dowOverallAvg ? '#6C8BD5cc' : '#6C8BD555';
         }
-        return i >= 5 ? '#f43f5ecc' : '#6366f1cc';
+        return i >= 5 ? '#E87C89cc' : '#6C8BD5cc';
     });
     const borderColors = dowAvg.map((v,i) => {
         if (showAvgLine.dow) {
-            if (i >= 5) return v >= dowOverallAvg ? '#f43f5e' : '#f43f5e88';
-            return v >= dowOverallAvg ? '#6366f1' : '#6366f188';
+            if (i >= 5) return v >= dowOverallAvg ? '#E87C89' : '#E87C8988';
+            return v >= dowOverallAvg ? '#6C8BD5' : '#6C8BD588';
         }
-        return i >= 5 ? '#f43f5e' : '#6366f1';
+        return i >= 5 ? '#E87C89' : '#6C8BD5';
     });
 
     const dowDatasets = [{
@@ -1097,7 +1274,7 @@ function renderDowChart() {
             label: '전체 평균 (' + fmt(Math.round(dowOverallAvg)) + '원)',
             data: DOW_LABELS.map(() => Math.round(dowOverallAvg)),
             type: 'line',
-            borderColor: '#f59e0b',
+            borderColor: '#E8A863',
             backgroundColor: 'transparent',
             borderWidth: 2,
             borderDash: [4, 4],
@@ -1400,14 +1577,14 @@ function calcWeeklyRank() {
     // 예: 마지막 데이터 4/8(화) → 이번주 4/7(월)~4/13(일) → 전주 3/31(월)~4/6(일)
     // 하지만 데이터가 4/8까지만 있으면 이번주는 아직 안끝남 → 전주 = 가장 최근 완전한 주
     const dayOfWeek = latestDate.getDay(); // 0=일, 1=월 ...
-    // 이번 주 월요일 계산
+    // 이번주 월요일 계산
     const thisMonday = new Date(latestDate);
     if (dayOfWeek === 0) {
         thisMonday.setDate(latestDate.getDate() - 6); // 일요일이면 그 주 월요일
     } else {
         thisMonday.setDate(latestDate.getDate() - (dayOfWeek - 1));
     }
-    // 전주 = 이번 주 월요일 - 7일 ~ 이번 주 월요일 - 1일
+    // 전주 = 이번주 월요일 - 7일 ~ 이번주 월요일 - 1일
     const prevMonday = new Date(thisMonday);
     prevMonday.setDate(thisMonday.getDate() - 7);
     const prevSunday = new Date(thisMonday);
@@ -1460,7 +1637,7 @@ function calcWeeklyRank() {
     // UI 렌더링
     document.getElementById('rankPeriod').textContent = weekStart + ' ~ ' + weekEnd;
 
-    const BRAND_CLR = {'미뇽맨션':'#6366f1','바쏠':'#f43f5e','휴그':'#10b981','굴뚝강아지':'#f59e0b'};
+    const BRAND_CLR = {'미뇽맨션':'#6C8BD5','바쏠':'#E87C89','휴그':'#5FAF9B','굴뚝강아지':'#E8A863'};
 
     function fmtAmt(v) {
         if (v >= 1e8) return (v/1e8).toFixed(1) + '억원';
@@ -1559,6 +1736,324 @@ function calcWeeklyRank() {
     });
 
     document.getElementById('rankCards').innerHTML = html;
+}
+
+// ============================================================
+// PERIOD COMPARE
+// ============================================================
+const COMPARE_COLORS = ['#6C8BD5','#E87C89','#5FAF9B','#E8A863'];
+const COMPARE_LABELS = ['A','B','C','D'];
+let compareChart = null;
+let compareChartType = 'line';
+let compareBucket = 'month';
+let compareSlotCount = 2;
+
+function setCompareChart(type, btn) {
+    compareChartType = type;
+    document.querySelectorAll('#compareChartToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function setCompareBucket(type, btn) {
+    compareBucket = type;
+    document.querySelectorAll('#compareBucketToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+// 비교 슬롯용 간편날짜 프리셋 HTML
+function buildCmpPresetHTML(idx) {
+    const items = [
+        {label:'빠른 선택', items:[
+            ['yesterday','어제'],['last7','최근 7일'],['thisWeek','이번주'],['lastWeek','지난주'],
+            ['thisMonth','이번달'],['lastMonth','지난달'],['last14','최근 14일'],['last30','최근 30일']
+        ]},
+        {label:'26년 월별', items:[
+            ['m2601','1월'],['m2602','2월'],['m2603','3월'],['m2604','4월'],
+            ['m2605','5월'],['m2606','6월'],['m2607','7월'],['m2608','8월'],
+            ['m2609','9월'],['m2610','10월'],['m2611','11월'],['m2612','12월']
+        ]},
+        {label:'올해', items:[
+            ['thisYear','올해 전체','full'],['thisFirstHalf','올해 상반기'],['thisSecondHalf','올해 하반기'],
+            ['thisQ1','1분기'],['thisQ2','2분기'],['thisQ3','3분기'],['thisQ4','4분기']
+        ]},
+        {label:'작년', items:[
+            ['lastYear','작년 전체','full'],['lastFirstHalf','작년 상반기'],['lastSecondHalf','작년 하반기'],
+            ['lastQ1','1분기'],['lastQ2','2분기'],['lastQ3','3분기'],['lastQ4','4분기']
+        ]}
+    ];
+    let html = '';
+    items.forEach((sec, si) => {
+        if (si > 0) html += '<hr style="border:none;border-top:1px solid rgba(0,0,0,0.08);margin:4px 0;">';
+        const gridCls = sec.label.includes('월별') ? 'preset-grid month-grid' : 'preset-grid';
+        html += '<div class="preset-section-label">' + sec.label + '</div><div class="' + gridCls + '">';
+        sec.items.forEach(it => {
+            const cls = it[2] === 'full' ? ' full' : '';
+            html += '<button class="preset-btn' + cls + '" onclick="setCmpPreset(' + idx + ',\'' + it[0] + '\')">' + it[1] + '</button>';
+        });
+        html += '</div>';
+    });
+    return html;
+}
+
+function toggleCmpPreset(idx, e) {
+    e.stopPropagation();
+    // 다른 드롭다운 닫기
+    document.querySelectorAll('.cmp-preset-dd.show').forEach(dd => dd.classList.remove('show'));
+    const dd = document.getElementById('cmpPresetDD' + idx);
+    if (!dd.innerHTML) dd.innerHTML = buildCmpPresetHTML(idx);
+    dd.classList.toggle('show');
+}
+
+function setCmpPreset(idx, type) {
+    const range = calcPresetRange(type);
+    if (!range) return;
+    const slot = document.querySelector('.compare-slot[data-idx="' + idx + '"]');
+    if (slot) {
+        slot.querySelector('.cmp-start').value = range.s;
+        slot.querySelector('.cmp-end').value = range.e;
+    }
+    document.querySelectorAll('.cmp-preset-dd.show').forEach(dd => dd.classList.remove('show'));
+}
+
+// 프리셋 범위 계산 공용 함수
+function calcPresetRange(type) {
+    const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
+    const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+    const dow = now.getDay();
+    let s, e;
+    function fmt(dt) {
+        return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+    }
+    switch(type) {
+        case 'yesterday': { const yd = new Date(y,m,d-1); s=e=fmt(yd); break; }
+        case 'thisWeek': { s=fmt(new Date(y,m,d-(dow===0?6:dow-1))); e=fmt(now); break; }
+        case 'lastWeek': { const mon=new Date(y,m,d-(dow===0?6:dow-1)-7); s=fmt(mon); e=fmt(new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+6)); break; }
+        case 'thisMonth': { s=fmt(new Date(y,m,1)); e=fmt(now); break; }
+        case 'lastMonth': { s=fmt(new Date(y,m-1,1)); e=fmt(new Date(y,m,0)); break; }
+        case 'thisYear': { s=y+'-01-01'; e=fmt(now); break; }
+        case 'lastYear': { s=(y-1)+'-01-01'; e=(y-1)+'-12-31'; break; }
+        case 'thisFirstHalf': { s=y+'-01-01'; e=y+'-06-30'; break; }
+        case 'thisSecondHalf': { s=y+'-07-01'; e=y+'-12-31'; break; }
+        case 'lastFirstHalf': { s=(y-1)+'-01-01'; e=(y-1)+'-06-30'; break; }
+        case 'lastSecondHalf': { s=(y-1)+'-07-01'; e=(y-1)+'-12-31'; break; }
+        case 'thisQ1': { s=y+'-01-01'; e=y+'-03-31'; break; }
+        case 'thisQ2': { s=y+'-04-01'; e=y+'-06-30'; break; }
+        case 'thisQ3': { s=y+'-07-01'; e=y+'-09-30'; break; }
+        case 'thisQ4': { s=y+'-10-01'; e=y+'-12-31'; break; }
+        case 'lastQ1': { s=(y-1)+'-01-01'; e=(y-1)+'-03-31'; break; }
+        case 'lastQ2': { s=(y-1)+'-04-01'; e=(y-1)+'-06-30'; break; }
+        case 'lastQ3': { s=(y-1)+'-07-01'; e=(y-1)+'-09-30'; break; }
+        case 'lastQ4': { s=(y-1)+'-10-01'; e=(y-1)+'-12-31'; break; }
+        case 'last7': { s=fmt(new Date(y,m,d-7)); e=fmt(new Date(y,m,d-1)); break; }
+        case 'last14': { s=fmt(new Date(y,m,d-14)); e=fmt(new Date(y,m,d-1)); break; }
+        case 'last30': { s=fmt(new Date(y,m,d-30)); e=fmt(new Date(y,m,d-1)); break; }
+        case 'm2601': { s='2026-01-01'; e='2026-01-31'; break; }
+        case 'm2602': { s='2026-02-01'; e='2026-02-28'; break; }
+        case 'm2603': { s='2026-03-01'; e='2026-03-31'; break; }
+        case 'm2604': { s='2026-04-01'; e='2026-04-30'; break; }
+        case 'm2605': { s='2026-05-01'; e='2026-05-31'; break; }
+        case 'm2606': { s='2026-06-01'; e='2026-06-30'; break; }
+        case 'm2607': { s='2026-07-01'; e='2026-07-31'; break; }
+        case 'm2608': { s='2026-08-01'; e='2026-08-31'; break; }
+        case 'm2609': { s='2026-09-01'; e='2026-09-30'; break; }
+        case 'm2610': { s='2026-10-01'; e='2026-10-31'; break; }
+        case 'm2611': { s='2026-11-01'; e='2026-11-30'; break; }
+        case 'm2612': { s='2026-12-01'; e='2026-12-31'; break; }
+        default: return null;
+    }
+    return { s, e };
+}
+
+// 비교 슬롯 드롭다운 외부 클릭 닫기
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.cmp-preset-wrap')) {
+        document.querySelectorAll('.cmp-preset-dd.show').forEach(dd => dd.classList.remove('show'));
+    }
+});
+
+function addCompareSlot() {
+    if (compareSlotCount >= 4) return;
+    const idx = compareSlotCount;
+    const slot = document.createElement('div');
+    slot.className = 'compare-slot';
+    slot.dataset.idx = idx;
+    slot.innerHTML = '<span class="slot-label" style="color:' + COMPARE_COLORS[idx] + ';">' + COMPARE_LABELS[idx] + '</span>' +
+        '<input type="date" class="cmp-start" data-idx="' + idx + '"> ~ <input type="date" class="cmp-end" data-idx="' + idx + '">' +
+        '<div class="cmp-preset-wrap"><button class="btn-cmp-preset" onclick="toggleCmpPreset(' + idx + ',event)">간편날짜</button><div class="cmp-preset-dd" id="cmpPresetDD' + idx + '"></div></div>' +
+        '<button class="slot-remove" onclick="removeCompareSlot(' + idx + ')">✕</button>';
+    const addBtn = document.getElementById('btnAddPeriod');
+    addBtn.parentNode.insertBefore(slot, addBtn);
+    compareSlotCount++;
+    if (compareSlotCount >= 4) addBtn.style.display = 'none';
+}
+
+function removeCompareSlot(idx) {
+    const slot = document.querySelector('.compare-slot[data-idx="' + idx + '"]');
+    if (slot) slot.remove();
+    compareSlotCount--;
+    document.getElementById('btnAddPeriod').style.display = '';
+}
+
+function runCompare() {
+    const slots = document.querySelectorAll('.compare-slot');
+    const periods = [];
+    slots.forEach(slot => {
+        const startEl = slot.querySelector('.cmp-start');
+        const endEl = slot.querySelector('.cmp-end');
+        const label = slot.querySelector('.slot-label').textContent;
+        if (startEl.value && endEl.value) {
+            periods.push({ start: startEl.value, end: endEl.value, label: label });
+        }
+    });
+    if (periods.length < 2) {
+        alert('최소 2개 기간을 설정해주세요.');
+        return;
+    }
+
+    document.getElementById('compareEmpty').style.display = 'none';
+
+    const filterBrand = document.getElementById('cmpFilterBrand').value;
+    const filterChannel = document.getElementById('cmpFilterChannel').value;
+    const isLine = compareChartType === 'line';
+
+    // 필터 라벨 (차트 부제)
+    let filterDesc = filterBrand === 'all' ? '전체 브랜드' : filterBrand;
+    if (filterChannel !== 'all') filterDesc += ' / ' + filterChannel;
+
+    // 각 기간마다 버킷별로 집계
+    // 버킷 키: day=offset일, week=offset주, month=offset월 (기간 시작 기준)
+    const periodSeries = periods.map((p, pi) => {
+        const start = new Date(p.start);
+        const end = new Date(p.end);
+        const rows = RAW_DATA.filter(r => {
+            if (r.date < p.start || r.date > p.end) return false;
+            if (filterBrand !== 'all' && r.brand !== filterBrand) return false;
+            if (filterChannel !== 'all' && r.channel !== filterChannel) return false;
+            return true;
+        });
+
+        const buckets = {};
+        rows.forEach(r => {
+            const d = new Date(r.date);
+            let idx;
+            if (compareBucket === 'day') {
+                idx = Math.floor((d - start) / (1000*60*60*24));
+            } else if (compareBucket === 'week') {
+                idx = Math.floor((d - start) / (1000*60*60*24*7));
+            } else {
+                idx = (d.getFullYear() - start.getFullYear()) * 12 + (d.getMonth() - start.getMonth());
+            }
+            buckets[idx] = (buckets[idx] || 0) + r.amount;
+        });
+
+        // 기간 길이에 맞는 버킷 수 계산
+        let bucketCount;
+        if (compareBucket === 'day') {
+            bucketCount = Math.floor((end - start) / (1000*60*60*24)) + 1;
+        } else if (compareBucket === 'week') {
+            bucketCount = Math.floor((end - start) / (1000*60*60*24*7)) + 1;
+        } else {
+            bucketCount = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+        }
+
+        const fmtStart = p.start.replace(/-/g,'').slice(2);
+        const fmtEnd = p.end.replace(/-/g,'').slice(2);
+        return {
+            label: p.label + ' (' + fmtStart + '~' + fmtEnd + ')',
+            buckets,
+            bucketCount,
+            colorIdx: pi
+        };
+    });
+
+    // X축 길이 = 가장 긴 기간
+    const maxBuckets = Math.max(...periodSeries.map(p => p.bucketCount));
+
+    // X축 라벨 = 각 기간의 실제 날짜 (A는 항상 상단, B/C/D가 다르면 아래줄 추가)
+    function bucketDate(periodStart, idx) {
+        const start = new Date(periodStart);
+        if (compareBucket === 'day') {
+            const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + idx);
+            return (d.getMonth()+1) + '/' + d.getDate();
+        } else if (compareBucket === 'week') {
+            const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + idx*7);
+            return (d.getMonth()+1) + '/' + d.getDate();
+        } else {
+            const d = new Date(start.getFullYear(), start.getMonth() + idx, 1);
+            return (d.getFullYear()%100) + '.' + String(d.getMonth()+1).padStart(2,'0');
+        }
+    }
+
+    const labels = Array.from({length: maxBuckets}, (_, i) => {
+        const dates = periods.map(p => bucketDate(p.start, i));
+        const primary = dates[0]; // A 기준
+        const others = dates.slice(1).filter((d, di) => i < periodSeries[di+1].bucketCount && d !== primary);
+        // 중복 제거
+        const uniqOthers = [...new Set(others)];
+        return [primary, ...uniqOthers];
+    });
+
+    // 기간별 평균 계산 (해당 기간의 버킷 수로 나눔)
+    function fmtMoney(v) {
+        if (v >= 1e8) {
+            const uk = v / 1e8;
+            const man = Math.round((v % 1e8) / 1e4);
+            if (man === 0) return uk.toFixed(0) + '억원';
+            return Math.floor(uk) + '억 ' + man.toLocaleString() + '만원';
+        }
+        if (v >= 1e4) return Math.round(v/1e4).toLocaleString() + '만원';
+        return Math.round(v).toLocaleString() + '원';
+    }
+
+    const datasets = periodSeries.map(ps => {
+        const vals = Array.from({length: ps.bucketCount}, (_, i) => ps.buckets[i] || 0);
+        const avg = vals.length ? vals.reduce((s,v) => s + v, 0) / vals.length : 0;
+        const unitLabel = compareBucket === 'day' ? '일' : compareBucket === 'week' ? '주' : '월';
+        return {
+        label: ps.label + '  ·  평균 ' + fmtMoney(avg) + '/' + unitLabel,
+        data: Array.from({length: maxBuckets}, (_, i) => (ps.buckets[i] !== undefined ? ps.buckets[i] : null)),
+        backgroundColor: COMPARE_COLORS[ps.colorIdx] + '99',
+        borderColor: COMPARE_COLORS[ps.colorIdx],
+        borderWidth: isLine ? 2.5 : 1,
+        borderRadius: isLine ? 0 : 4,
+        tension: 0.3,
+        pointRadius: isLine ? 2.5 : 0,
+        pointHoverRadius: 5,
+        fill: false,
+        spanGaps: false
+        };
+    });
+
+    if (compareChart) compareChart.destroy();
+    const ctx = document.getElementById('chartCompare').getContext('2d');
+    compareChart = new Chart(ctx, {
+        type: compareChartType,
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: '필터: ' + filterDesc, font: { size: 12, weight: 'normal' }, color: '#6b7280', padding: {bottom: 10} },
+                legend: { position: 'top', align: 'center', labels: { font: { size: 12 }, usePointStyle: true, pointStyle: isLine ? 'circle' : 'rectRounded', padding: 24, boxWidth: 10, boxHeight: 10 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            if (ctx.raw === null || ctx.raw === undefined) return ctx.dataset.label + ': -';
+                            return ctx.dataset.label + ': ' + ctx.raw.toLocaleString() + '원';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: function(v) { return v >= 1e8 ? (v/1e8).toFixed(1)+'억' : v >= 1e4 ? (v/1e4).toFixed(0)+'만' : v.toLocaleString(); } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                }
+            }
+        }
+    });
 }
 
 // ============================================================
