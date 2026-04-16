@@ -348,12 +348,12 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
                         <button onclick="setTrendMode('brand')">브랜드별</button>
                     </div>
                     <div class="chart-toggle" id="avgToggle1">
-                        <button class="active" onclick="toggleAvgLine('trend', true, this)">평균선</button>
-                        <button onclick="toggleAvgLine('trend', false, this)">끄기</button>
+                        <button onclick="toggleAvgLine('trend', true, this)">평균선</button>
+                        <button class="active" onclick="toggleAvgLine('trend', false, this)">끄기</button>
                     </div>
                     <div class="chart-toggle" id="trendlineToggle">
-                        <button class="active" onclick="toggleTrendline(true, this)">추세선</button>
-                        <button onclick="toggleTrendline(false, this)">끄기</button>
+                        <button onclick="toggleTrendline(true, this)">추세선</button>
+                        <button class="active" onclick="toggleTrendline(false, this)">끄기</button>
                     </div>
                 </div>
             </h3>
@@ -380,8 +380,8 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
         <div class="chart-card">
             <h3>요일별 결제액 패턴
                 <div class="chart-toggle" id="avgToggle2">
-                    <button class="active" onclick="toggleAvgLine('dow', true, this)">평균선</button>
-                    <button onclick="toggleAvgLine('dow', false, this)">끄기</button>
+                    <button onclick="toggleAvgLine('dow', true, this)">평균선</button>
+                    <button class="active" onclick="toggleAvgLine('dow', false, this)">끄기</button>
                 </div>
             </h3>
             <canvas id="chartDow"></canvas>
@@ -832,8 +832,8 @@ function renderKPIs() {
 // ============================================================
 // TREND CHART (Monthly/Quarterly) + Trendline
 // ============================================================
-let showTrendline = true;
-let showAvgLine = { trend: true, dow: true };
+let showTrendline = false;
+let showAvgLine = { trend: false, dow: false };
 
 function toggleAvgLine(chart, show, btn) {
     showAvgLine[chart] = show;
@@ -1000,6 +1000,24 @@ function renderTrendChart() {
                 order: 2,
             });
 
+            if (showAvgLine.trend) {
+                const brandAvg = vals.length > 0 ? vals.reduce((s,v)=>s+v,0) / vals.length : 0;
+                datasets.push({
+                    label: b + ' 평균 (' + fmt(Math.round(brandAvg)) + '원)',
+                    data: vals.map(() => Math.round(brandAvg)),
+                    type: 'line',
+                    borderColor: BRAND_COLORS[b],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [4, 4],
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    tension: 0,
+                    fill: false,
+                    order: 0,
+                });
+            }
+
             if (showTrendline && vals.length >= 2) {
                 const brandFiltered = filteredData.filter(r=>r.brand===b);
                 const adjVals = adjustForTrendline(vals, keys, unit, brandFiltered);
@@ -1020,7 +1038,7 @@ function renderTrendChart() {
             }
         });
 
-        const opts = trendOptions('브랜드별', showTrendline);
+        const opts = trendOptions('브랜드별', showAvgLine.trend || showTrendline);
         opts.plugins.legend = {display:true, position:'top', labels:{usePointStyle:true, padding:16}};
 
         charts.trend = new Chart(canvas, {
