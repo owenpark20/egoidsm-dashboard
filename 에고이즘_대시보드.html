@@ -176,7 +176,8 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .rank-badge:hover .badge-tip { opacity:1; }
 
 @media(max-width:1024px) { .rank-cards { grid-template-columns: repeat(3, 1fr); } }
-@media(max-width:600px) { .rank-cards { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width:600px) { .rank-cards { grid-template-columns: repeat(2, 1fr); gap:8px; } }
+@media(max-width:400px) { .rank-cards { grid-template-columns: 1fr; } }
 
 /* Footer */
 .footer { text-align:center; padding:16px; font-size:12px; color:var(--text2); }
@@ -189,7 +190,7 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .loading-text { font-size:14px; color:var(--text2); }
 
 /* Google Sheets Config */
-.config-banner { background:linear-gradient(135deg,#fef3c7,#fde68a); border:1px solid #E8A863; border-radius:var(--radius); padding:16px 20px; margin-bottom:var(--gap); display:flex; align-items:center; gap:12px; }
+.config-banner { background:linear-gradient(135deg,#fef3c7,#fde68a); border:1px solid #E8A863; border-radius:var(--radius); padding:16px 20px; margin-bottom:var(--gap); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 .config-banner.hidden { display:none; }
 .config-banner input { flex:1; padding:8px 12px; border:1px solid #d97706; border-radius:6px; font-size:13px; }
 .config-banner button { padding:8px 16px; background:#d97706; color:white; border:none; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap; }
@@ -197,8 +198,53 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .config-info { font-size:12px; color:#92400e; }
 
 /* Responsive */
-@media(max-width:1024px) { .kpi-row{grid-template-columns:repeat(2,1fr)} .chart-row{grid-template-columns:1fr} }
-@media(max-width:600px) { .kpi-row{grid-template-columns:1fr} .filters{flex-direction:column} }
+@media(max-width:1024px) {
+    .kpi-row { grid-template-columns:repeat(2,1fr); }
+    .chart-row { grid-template-columns:1fr; }
+}
+@media(max-width:600px) {
+    :root { --gap:10px; }
+    .container { padding:8px; }
+    .header { padding:16px 14px; }
+    .header h1 { font-size:17px; }
+    .header .subtitle { font-size:11px; }
+    .header-top { flex-direction:column; align-items:flex-start; gap:8px; }
+    .filters { flex-direction:column; gap:8px; }
+    .filter-group { width:100%; }
+    .filter-group select, .filter-group input[type="date"] { width:100%; min-width:unset; box-sizing:border-box; }
+    .date-preset-wrap { width:100%; }
+    .btn-preset { width:100%; text-align:center; }
+    .preset-dropdown { width:calc(100vw - 32px); max-width:420px; right:0; left:auto; }
+    .kpi-row { grid-template-columns:repeat(2,1fr); gap:8px; }
+    .kpi-card { padding:14px 12px; }
+    .kpi-value { font-size:20px; }
+    .kpi-label { font-size:11px; }
+    .chart-card { padding:14px 10px; }
+    .chart-card canvas { max-height:240px; }
+    .chart-card h3 { font-size:13px; flex-direction:column; align-items:flex-start; gap:8px; }
+    .chart-toggle button { padding:3px 8px; font-size:11px; }
+    .rank-section { padding:14px 10px; }
+    .rank-header { flex-direction:column; align-items:flex-start; gap:6px; }
+    .rank-card { padding:10px 8px; }
+    .rank-card .rank-value { font-size:20px; }
+    .rank-card .rank-label { font-size:12px; }
+    .table-card { padding:14px 8px; }
+    table { font-size:12px; }
+    thead th { padding:8px 6px; font-size:10px; }
+    tbody td { padding:8px 6px; }
+    .compare-wrap { padding:14px 10px; }
+    .compare-slots { flex-direction:column; }
+    .compare-slot input[type="date"] { width:90px; font-size:12px; }
+    .cmp-preset-dd { width:calc(100vw - 48px); max-width:280px; }
+    .yoy-bar-val { width:50px; font-size:9px; }
+    .btn-reset { width:100%; text-align:center; }
+    .badge-tip { font-size:10px; }
+}
+@media(max-width:400px) {
+    .kpi-row { grid-template-columns:1fr; }
+    .kpi-value { font-size:22px; }
+    .preset-dropdown { width:calc(100vw - 20px); }
+}
 @media print { .header{background:#333!important;-webkit-print-color-adjust:exact;print-color-adjust:exact} .filters,.config-banner,.btn-reset{display:none} }
     </style>
 </head>
@@ -1695,7 +1741,7 @@ function rankSparkline(data8, sortedWeeks, color, isTotal) {
         circles += `<g class="spark-tip"><rect x="${tipX - tipW/2}" y="${tipY - 12}" width="${tipW}" height="16" /><text x="${tipX}" y="${tipY}" text-anchor="middle">${tipText}</text></g>`;
     });
 
-    return `<svg class="sparkline-svg" width="${w}" height="${h}" style="display:block;margin:6px auto 0;">
+    return `<svg class="sparkline-svg" width="${w}" height="${h}" style="display:block;margin:6px auto 0;max-width:100%;">
         <polygon points="${areaPoints}" fill="${fillEnd}" />
         <polyline points="${points.join(' ')}" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         ${circles}
