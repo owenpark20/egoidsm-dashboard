@@ -337,6 +337,17 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
         <div class="rank-cards" id="rankCards"></div>
     </div>
 
+    <!-- Weekly Rank (100 weeks) - Collapsible -->
+    <div class="rank-section" id="rankSection100" style="margin-top:12px;">
+        <div class="rank-header" style="cursor:pointer;" onclick="toggleRank100()">
+            <h3>📊 전주 결제액 — 최근 100주 순위 <span id="rank100Arrow" style="font-size:14px;transition:transform 0.3s;">▶</span></h3>
+            <span class="rank-period" id="rankPeriod100"></span>
+        </div>
+        <div id="rankCards100Wrap" style="display:none;overflow:hidden;transition:all 0.3s;">
+            <div class="rank-cards" id="rankCards100"></div>
+        </div>
+    </div>
+
     <!-- Charts Row 1 -->
     <div class="chart-row">
         <div class="chart-card chart-full">
@@ -1754,6 +1765,180 @@ function calcWeeklyRank() {
     });
 
     document.getElementById('rankCards').innerHTML = html;
+}
+
+// ============================================================
+// 100주 순위
+// ============================================================
+let rank100Open = false;
+function toggleRank100() {
+    rank100Open = !rank100Open;
+    const wrap = document.getElementById('rankCards100Wrap');
+    const arrow = document.getElementById('rank100Arrow');
+    if (rank100Open) {
+        wrap.style.display = 'block';
+        arrow.textContent = '▼';
+        renderRank100();
+    } else {
+        wrap.style.display = 'none';
+        arrow.textContent = '▶';
+    }
+}
+
+function renderRank100() {
+    if (!RAW_DATA || RAW_DATA.length === 0) return;
+
+    const dates = RAW_DATA.map(r => new Date(r.date));
+    const latestDate = new Date(Math.max(...dates));
+    function fmt(d) {
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+    const dayOfWeek = latestDate.getDay();
+    const thisMonday = new Date(latestDate);
+    if (dayOfWeek === 0) {
+        thisMonday.setDate(latestDate.getDate() - 6);
+    } else {
+        thisMonday.setDate(latestDate.getDate() - (dayOfWeek - 1));
+    }
+    const prevMonday = new Date(thisMonday);
+    prevMonday.setDate(thisMonday.getDate() - 7);
+    const prevSunday = new Date(thisMonday);
+    prevSunday.setDate(thisMonday.getDate() - 1);
+
+    const weekStart = fmt(prevMonday);
+    const weekEnd = fmt(prevSunday);
+
+    const weeks100 = [];
+    for (let i = 0; i < 100; i++) {
+        const mon = new Date(prevMonday);
+        mon.setDate(prevMonday.getDate() - (i * 7));
+        const sun = new Date(mon);
+        sun.setDate(mon.getDate() + 6);
+        weeks100.push({ start: fmt(mon), end: fmt(sun) });
+    }
+
+    const brands = [...new Set(RAW_DATA.map(r => r.brand))].sort();
+
+    function weeklyAmount(data, start, end) {
+        return data.filter(r => r.date >= start && r.date <= end).reduce((s, r) => s + r.amount, 0);
+    }
+
+    const totalWeeks = weeks100.map(w => ({ ...w, amount: weeklyAmount(RAW_DATA, w.start, w.end) }))
+        .filter(w => w.amount > 0)
+        .sort((a, b) => b.amount - a.amount);
+
+    const totalRank = totalWeeks.findIndex(w => w.start === weekStart) + 1;
+    const totalAmount = totalWeeks.find(w => w.start === weekStart)?.amount || 0;
+    const totalCount = totalWeeks.length;
+    const totalAvg = totalCount > 0 ? totalWeeks.reduce((s, w) => s + w.amount, 0) / totalCount : 0;
+    const totalDiff = totalAvg > 0 ? ((totalAmount - totalAvg) / totalAvg * 100) : 0;
+
+    const brandRanks = brands.map(brand => {
+        const brandData = RAW_DATA.filter(r => r.brand === brand);
+        const bWeeks = weeks100.map(w => ({ ...w, amount: weeklyAmount(brandData, w.start, w.end) }))
+            .filter(w => w.amount > 0)
+            .sort((a, b) => b.amount - a.amount);
+        const rank = bWeeks.findIndex(w => w.start === weekStart) + 1;
+        const amount = bWeeks.find(w => w.start === weekStart)?.amount || 0;
+        const avg = bWeeks.length > 0 ? bWeeks.reduce((s, w) => s + w.amount, 0) / bWeeks.length : 0;
+        const diff = avg > 0 ? ((amount - avg) / avg * 100) : 0;
+        return { brand, rank, total: bWeeks.length, amount, avg, diff };
+    });
+
+    document.getElementById('rankPeriod100').textContent = weekStart + ' ~ ' + weekEnd;
+
+    const BRAND_CLR = {'미뇽맨션':'#6C8BD5','바쏠':'#E87C89','휴그':'#5FAF9B','굴뚝강아지':'#E8A863'};
+
+    function fmtAmt(v) {
+        if (v >= 1e8) return (v/1e8).toFixed(1) + '억원';
+        if (v > 0) return Math.round(v/1e4).toLocaleString() + '만원';
+        return '-';
+    }
+    function diffHtml(diff, isTotal) {
+        if (diff === 0) return '';
+        const sign = diff > 0 ? '+' : '';
+        const color = isTotal ? (diff > 0 ? '#6ee7b7' : '#fca5a5') : (diff > 0 ? 'var(--positive)' : 'var(--negative)');
+        return `<div style="font-size:13px;font-weight:600;color:${color};margin-top:2px;">${sign}${diff.toFixed(1)}%</div>`;
+    }
+
+    function sparkline100(data8, color, isTotal) {
+        if (!data8 || data8.length < 2) return '';
+        const w = 120, h = 44, pad = 3;
+        const vals = data8.map(d => d.amount);
+        const mn = Math.min(...vals) * 0.85;
+        const mx = Math.max(...vals) * 1.05;
+        const range = mx - mn || 1;
+        const points = vals.map((v, i) => {
+            const x = pad + (i / (vals.length - 1)) * (w - pad * 2);
+            const y = h - pad - ((v - mn) / range) * (h - pad * 2);
+            return `${x},${y}`;
+        });
+        const last = vals[vals.length - 1];
+        const prev = vals[vals.length - 2];
+        const strokeColor = isTotal ? 'rgba(255,255,255,0.8)' : color;
+        const fillEnd = isTotal ? 'rgba(255,255,255,0.15)' : color + '22';
+        const dotColor = last >= prev ? (isTotal ? '#6ee7b7' : 'var(--positive)') : (isTotal ? '#fca5a5' : 'var(--negative)');
+        const lastX = pad + ((vals.length-1) / (vals.length - 1)) * (w - pad*2);
+        const lastY = h - pad - ((last - mn) / range) * (h - pad*2);
+        const firstX = pad;
+        const areaPoints = points.join(' ') + ` ${pad + (w-pad*2)},${h-pad} ${firstX},${h-pad}`;
+        return `<svg width="${w}" height="${h}" style="display:block;margin:6px auto 0;">
+            <polygon points="${areaPoints}" fill="${fillEnd}" />
+            <polyline points="${points.join(' ')}" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="${lastX}" cy="${lastY}" r="3.5" fill="${dotColor}" />
+        </svg>`;
+    }
+
+    function getLast8Weeks100(data) {
+        const recent8 = weeks100.slice(0, 8).reverse();
+        return recent8.map(w => ({ ...w, amount: weeklyAmount(data, w.start, w.end) }));
+    }
+
+    const totalLast8 = getLast8Weeks100(RAW_DATA);
+
+    function avg8Rank100(sortedWeeks) {
+        const recent8starts = weeks100.slice(0, 8).map(w => w.start);
+        const ranks = recent8starts.map(s => {
+            const idx = sortedWeeks.findIndex(w => w.start === s);
+            return idx >= 0 ? idx + 1 : 0;
+        }).filter(r => r > 0);
+        if (ranks.length === 0) return 0;
+        return ranks.reduce((s, r) => s + r, 0) / ranks.length;
+    }
+
+    const totalAvg8Rank = avg8Rank100(totalWeeks);
+
+    let html = '';
+    html += `<div class="rank-card total">
+        <div class="rank-label">전체 합산</div>
+        <div class="rank-value">${totalRank > 0 ? totalRank + '위' : '-'} <span style="font-weight:500;opacity:0.7;">/ ${fmtAmt(totalAmount)}</span></div>
+        ${diffHtml(totalDiff, true)}
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;">100주 평균 ${fmtAmt(totalAvg)}</div>
+        ${sparkline100(totalLast8, '#fff', true)}
+        ${totalAvg8Rank > 0 ? `<div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:3px;">8주 평균 순위 <b>${totalAvg8Rank.toFixed(1)}위</b></div>` : ''}
+        ${totalRank > 0 && totalRank <= 10 ? '<div class="rank-badge top5">🏆</div>' : totalRank <= 20 ? '<div class="rank-badge top15">★</div>' : totalRank > 70 ? '<div class="rank-badge bottom">⚠️</div>' : ''}
+    </div>`;
+
+    brandRanks.forEach(b => {
+        const color = BRAND_CLR[b.brand] || '#6b7280';
+        const brandData = RAW_DATA.filter(r => r.brand === b.brand);
+        const bLast8 = getLast8Weeks100(brandData);
+        const bWeeksSorted = weeks100.map(w => ({ ...w, amount: weeklyAmount(brandData, w.start, w.end) }))
+            .filter(w => w.amount > 0)
+            .sort((a, b2) => b2.amount - a.amount);
+        const bAvg8Rank = avg8Rank100(bWeeksSorted);
+        html += `<div class="rank-card" style="border-left:3px solid ${color};">
+            <div class="rank-label">${b.brand}</div>
+            <div class="rank-value" style="color:${color};">${b.rank > 0 ? b.rank + '위' : '-'} <span style="font-weight:500;color:var(--text2);">/ ${fmtAmt(b.amount)}</span></div>
+            ${diffHtml(b.diff, false)}
+            <div style="font-size:11px;color:var(--text2);margin-top:2px;">100주 평균 ${fmtAmt(b.avg)}</div>
+            ${sparkline100(bLast8, color, false)}
+            ${bAvg8Rank > 0 ? `<div style="font-size:10px;color:var(--text2);margin-top:3px;">8주 평균 순위 <b>${bAvg8Rank.toFixed(1)}위</b></div>` : ''}
+            ${b.rank > 0 && b.rank <= 10 ? '<div class="rank-badge top5">🏆</div>' : b.rank <= 20 ? '<div class="rank-badge top15">★</div>' : b.rank > 70 ? '<div class="rank-badge bottom">⚠️</div>' : ''}
+        </div>`;
+    });
+
+    document.getElementById('rankCards100').innerHTML = html;
 }
 
 // ============================================================
