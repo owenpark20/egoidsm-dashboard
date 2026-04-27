@@ -147,54 +147,102 @@ function handleFile(file) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+            const wb = XLSX.read(e.target.result, {type:'array'});
+            console.log('시트 목록:', wb.SheetNames);
             parseWorkbook(wb);
-            info.textContent = '✅ ' + file.name + ' — ' + parsedData.length.toLocaleString() + '건 데이터 감지';
-            info.className = 'info show';
-
-            // Set date range
-            if (allDates.length) {
-                document.getElementById('filterStart').value = allDates[0];
-                document.getElementById('filterEnd').value = allDates[allDates.length - 1];
+            if (parsedData.length === 0) {
+                info.textContent = '⚠️ ' + file.name + ' — 데이터 0건. 시트명 확인: [' + wb.SheetNames.join(', ') + ']. 콘솔(F12)에서 상세 로그를 확인하세요.';
+                info.className = 'info show error';
+            } else {
+                info.textContent = '✅ ' + file.name + ' — ' + parsedData.length.toLocaleString() + '건 데이터 감지 (' + allDates.length + '일)';
+                info.className = 'info show';
             }
+
+            // Set date range: 시작일=데이터 첫날, 종료일=한국시간 어제
+            const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yStr = yesterday.getFullYear() + '-' + String(yesterday.getMonth()+1).padStart(2,'0') + '-' + String(yesterday.getDate()).padStart(2,'0');
+            const firstDate = allDates.length > 0 ? allDates[0] : yStr;
+            document.getElementById('filterStart').value = firstDate;
+            document.getElementById('filterEnd').value = yStr;
             document.getElementById('step2').style.display = 'block';
         } catch(err) {
             info.textContent = '❌ 파일 읽기 실패: ' + err.message;
             info.className = 'info show error';
+            console.error('파일 읽기 에러:', err);
         }
     };
     reader.readAsArrayBuffer(file);
 }
 
+function excelDateToStr(dateVal) {
+    if (!dateVal) return '';
+    // Case 1: Date object
+    if (dateVal instanceof Date) {
+        const y = dateVal.getFullYear();
+        const m = String(dateVal.getMonth()+1).padStart(2,'0');
+        const d = String(dateVal.getDate()).padStart(2,'0');
+        return y+'-'+m+'-'+d;
+    }
+    // Case 2: Excel serial number (e.g. 45658)
+    if (typeof dateVal === 'number' && dateVal > 40000 && dateVal < 60000) {
+        const d = XLSX.SSF.parse_date_code(dateVal);
+        return d.y+'-'+String(d.m).padStart(2,'0')+'-'+String(d.d).padStart(2,'0');
+    }
+    // Case 3: String like "2025-01-01" or "2025-01-01 00:00:00"
+    if (typeof dateVal === 'string') {
+        const match = dateVal.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return match[0];
+        // Try Korean format or slash format
+        const match2 = dateVal.match(/(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/);
+        if (match2) return match2[1]+'-'+String(match2[2]).padStart(2,'0')+'-'+String(match2[3]).padStart(2,'0');
+    }
+    return '';
+}
+
 function parseWorkbook(wb) {
     parsedData = [];
     const dateSet = new Set();
+    const debugInfo = { sheets:[], sampleDates:[], errors:[] };
+
+    // 시트 이름 확인
+    debugInfo.sheets = wb.SheetNames;
 
     BRAND_SHEETS.forEach(brand => {
-        if (!wb.SheetNames.includes(brand)) return;
-        const ws = wb.Sheets[brand];
-        const data = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, dateNF:'yyyy-mm-dd'});
-        if (data.length < 2) return;
+        // 시트명 부분 일치 검색 (앞뒤 공백 등 대응)
+        let sheetName = wb.SheetNames.find(s => s.trim() === brand);
+        if (!sheetName) sheetName = wb.SheetNames.find(s => s.includes(brand));
+        if (!sheetName) {
+            debugInfo.errors.push(brand + ' 시트를 찾을 수 없음 (시트 목록: ' + wb.SheetNames.join(', ') + ')');
+            console.warn(brand + ' 시트 없음. 사용 가능한 시트:', wb.SheetNames);
+            return;
+        }
+        const ws = wb.Sheets[sheetName];
 
-        // Row 0 = dates, Row 1+ = channels
+        // raw:true로 읽어서 serial number 그대로 받기
+        const data = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+        if (data.length < 2) {
+            debugInfo.errors.push(brand + ' 시트 데이터 없음 (행 수: ' + data.length + ')');
+            return;
+        }
+
         const headerRow = data[0];
+        console.log('[' + brand + '] 헤더 행 길이:', headerRow.length, '데이터 행 수:', data.length - 1);
+
+        // 첫 5개 날짜 샘플 저장 (디버깅용)
+        for (let i = 1; i <= 5 && i < headerRow.length; i++) {
+            const sample = {brand, col: i, raw: headerRow[i], type: typeof headerRow[i], isDate: headerRow[i] instanceof Date, parsed: excelDateToStr(headerRow[i])};
+            debugInfo.sampleDates.push(sample);
+            console.log('[' + brand + '] 컬럼 ' + i + ':', JSON.stringify(sample));
+        }
 
         for (let col = 1; col < headerRow.length; col++) {
-            let dateVal = headerRow[col];
-            let dateStr = '';
-            if (dateVal instanceof Date) {
-                dateStr = dateVal.toISOString().slice(0, 10);
-            } else if (typeof dateVal === 'number') {
-                // Excel serial date
-                const d = XLSX.SSF.parse_date_code(dateVal);
-                dateStr = d.y + '-' + String(d.m).padStart(2,'0') + '-' + String(d.d).padStart(2,'0');
-            } else if (typeof dateVal === 'string') {
-                dateStr = dateVal.slice(0, 10);
-            }
-            if (!dateStr || dateStr.length < 10) continue;
+            const dateStr = excelDateToStr(headerRow[col]);
+            if (!dateStr) continue;
 
             for (let row = 1; row < data.length; row++) {
-                const channel = data[row][0];
+                const channel = data[row] ? data[row][0] : null;
                 if (!channel || channel === '전체') continue;
                 const amount = parseInt(data[row][col]) || 0;
                 if (amount === 0) continue;
@@ -206,6 +254,13 @@ function parseWorkbook(wb) {
     });
 
     allDates = [...dateSet].sort();
+
+    // 디버그 정보 표시
+    console.log('파싱 결과:', debugInfo);
+    console.log('감지된 날짜 범위:', allDates[0], '~', allDates[allDates.length-1]);
+    console.log('총 데이터:', parsedData.length, '건');
+
+    window._debugInfo = debugInfo;
 }
 
 function convertData() {
@@ -232,21 +287,23 @@ function convertData() {
         <div class="stat"><div class="label">총 금액</div><div class="value">${(total/1e8).toFixed(1)}억</div></div>
     `;
 
-    // Generate CSV (without header for appending, with header option)
+    // 탭 구분 (클립보드 → Google Sheets 붙여넣기용)
+    let tsv = filtered.map(r => `${r.date}\t${r.brand}\t${r.channel}\t${r.amount}`).join('\n');
+    // 쉼표 구분 (CSV 다운로드용)
     let csv = filtered.map(r => `${r.date},${r.brand},${r.channel},${r.amount}`).join('\n');
 
-    document.getElementById('output').value = csv;
+    document.getElementById('output').value = tsv;
     document.getElementById('step3').style.display = 'block';
 
-    // Store for download
+    // Store for download/copy
     window._csvData = 'date,brand,channel,amount\n' + csv;
-    window._csvNoHeader = csv;
+    window._tsvData = tsv;
 }
 
 function copyToClipboard() {
-    const text = document.getElementById('output').value;
+    const text = window._tsvData || document.getElementById('output').value;
     navigator.clipboard.writeText(text).then(() => {
-        alert('✅ 복사 완료!\n\nGoogle Sheets에서 맨 아래 빈 행을 클릭하고\nCtrl+Shift+V 로 붙여넣기 하세요.');
+        alert('✅ 복사 완료!\n\nGoogle Sheets에서 맨 아래 빈 행의 A열을 클릭하고\nCtrl+V 로 붙여넣기 하세요.');
     }).catch(() => {
         document.getElementById('output').select();
         document.execCommand('copy');
@@ -255,7 +312,7 @@ function copyToClipboard() {
 }
 
 function copyHeaderOnly() {
-    navigator.clipboard.writeText('date,brand,channel,amount').then(() => {
+    navigator.clipboard.writeText('date\tbrand\tchannel\tamount').then(() => {
         alert('✅ 헤더 복사 완료!\nGoogle Sheets 첫 행에 붙여넣기 하세요.');
     });
 }
