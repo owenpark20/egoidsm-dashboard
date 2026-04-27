@@ -1602,22 +1602,23 @@ function calcWeeklyRank() {
 
     function fmt(d) { return d.toISOString().slice(0,10); }
 
-    // 마지막 데이터 날짜가 속한 주의 전주 (월~일) 계산
-    // 예: 마지막 데이터 4/8(화) → 이번주 4/7(월)~4/13(일) → 전주 3/31(월)~4/6(일)
-    // 하지만 데이터가 4/8까지만 있으면 이번주는 아직 안끝남 → 전주 = 가장 최근 완전한 주
+    // 전주(월~일) 계산: 일요일까지 데이터가 있으면 그 주가 완성된 전주
     const dayOfWeek = latestDate.getDay(); // 0=일, 1=월 ...
-    // 이번주 월요일 계산
-    const thisMonday = new Date(latestDate);
+    let prevMonday, prevSunday;
     if (dayOfWeek === 0) {
-        thisMonday.setDate(latestDate.getDate() - 6); // 일요일이면 그 주 월요일
+        // 일요일 = 해당 주 완성 → 전주 = 그 주 (월~일)
+        prevMonday = new Date(latestDate);
+        prevMonday.setDate(latestDate.getDate() - 6);
+        prevSunday = new Date(latestDate);
     } else {
+        // 주 중간 → 전주 = 직전 완성된 주
+        const thisMonday = new Date(latestDate);
         thisMonday.setDate(latestDate.getDate() - (dayOfWeek - 1));
+        prevMonday = new Date(thisMonday);
+        prevMonday.setDate(thisMonday.getDate() - 7);
+        prevSunday = new Date(thisMonday);
+        prevSunday.setDate(thisMonday.getDate() - 1);
     }
-    // 전주 = 이번주 월요일 - 7일 ~ 이번주 월요일 - 1일
-    const prevMonday = new Date(thisMonday);
-    prevMonday.setDate(thisMonday.getDate() - 7);
-    const prevSunday = new Date(thisMonday);
-    prevSunday.setDate(thisMonday.getDate() - 1);
 
     const weekStart = fmt(prevMonday);
     const weekEnd = fmt(prevSunday);
@@ -1794,16 +1795,19 @@ function renderRank100() {
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
     const dayOfWeek = latestDate.getDay();
-    const thisMonday = new Date(latestDate);
+    let prevMonday, prevSunday;
     if (dayOfWeek === 0) {
-        thisMonday.setDate(latestDate.getDate() - 6);
+        prevMonday = new Date(latestDate);
+        prevMonday.setDate(latestDate.getDate() - 6);
+        prevSunday = new Date(latestDate);
     } else {
+        const thisMonday = new Date(latestDate);
         thisMonday.setDate(latestDate.getDate() - (dayOfWeek - 1));
+        prevMonday = new Date(thisMonday);
+        prevMonday.setDate(thisMonday.getDate() - 7);
+        prevSunday = new Date(thisMonday);
+        prevSunday.setDate(thisMonday.getDate() - 1);
     }
-    const prevMonday = new Date(thisMonday);
-    prevMonday.setDate(thisMonday.getDate() - 7);
-    const prevSunday = new Date(thisMonday);
-    prevSunday.setDate(thisMonday.getDate() - 1);
 
     const weekStart = fmt(prevMonday);
     const weekEnd = fmt(prevSunday);
