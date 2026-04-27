@@ -160,10 +160,20 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .yoy-bar-fill { height:100%; border-radius:3px; transition:width 0.5s; }
 .yoy-bar-val { width:60px; font-size:10px; flex-shrink:0; }
 
-/* Sparkline hover - CSS only for instant response */
+/* Sparkline hover - CSS custom tooltip for instant response */
 .spark-dot { transition: none; pointer-events: all; cursor: pointer; }
 .sparkline-svg:hover .spark-dot:not(.spark-last) { r: 3; opacity: 0.4; }
 .spark-dot:hover { r: 5 !important; opacity: 1 !important; }
+.spark-tip { pointer-events:none; opacity:0; transition:opacity 0.08s; }
+.spark-dot:hover + .spark-tip { opacity:1; }
+.spark-tip rect { fill:#1e293b; rx:4; }
+.spark-tip text { fill:#fff; font-size:10px; font-family:inherit; }
+
+/* Badge custom tooltip */
+.rank-badge { position:relative !important; }
+.rank-badge .badge-tip { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; font-size:11px; font-weight:400; padding:4px 8px; border-radius:5px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.08s; z-index:100; }
+.rank-badge .badge-tip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:4px solid transparent; border-top-color:#1e293b; }
+.rank-badge:hover .badge-tip { opacity:1; }
 
 @media(max-width:1024px) { .rank-cards { grid-template-columns: repeat(3, 1fr); } }
 @media(max-width:600px) { .rank-cards { grid-template-columns: repeat(2, 1fr); } }
@@ -201,7 +211,7 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 
 <div class="container">
     <!-- Data Source Config -->
-    <div class="config-banner" id="configBanner">
+    <div class="config-banner hidden" id="configBanner">
         <div style="flex-shrink:0;">
             <div style="font-weight:600;font-size:14px;color:#92400e;">데이터 연동</div>
             <div class="config-info">방법1: Google Sheets URL 입력 | 방법2: CSV 파일 직접 선택</div>
@@ -582,6 +592,7 @@ function loadFromGoogleSheets(url) {
     function tryNext() {
         if (proxyIdx >= CORS_PROXIES.length) {
             document.getElementById('loading').style.display = 'none';
+            document.getElementById('configBanner').classList.remove('hidden');
             alert('Google Sheets 자동 연결이 안 됩니다.\n\n대신 "CSV 파일 선택" 버튼을 사용해주세요:\n1. Google Sheets에서 파일 → 다운로드 → CSV로 다운로드\n2. 대시보드의 "CSV 파일 선택" 버튼으로 다운로드한 파일 선택');
             // 내장 데이터로 폴백
             RAW_DATA = EMBEDDED_DATA.map(r => ({date:r[0], brand:r[1], channel:r[2], amount:r[3]}));
@@ -631,15 +642,12 @@ function loadCSVFile(input) {
 // ============================================================
 // INITIALIZATION
 // ============================================================
+const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEKR3rw3ixmaQ2KjeoDGPIKofq9JcSy_6kUJtkPCMdVxU90r6TkgCMct4bxH9o3IlklOIC2EMizufj/pub?output=csv';
+
 function init() {
     const savedUrl = localStorage.getItem(GSHEET_KEY);
-    if (savedUrl) {
-        loadFromGoogleSheets(savedUrl);
-    } else {
-        RAW_DATA = EMBEDDED_DATA.map(r => ({date:r[0], brand:r[1], channel:r[2], amount:r[3]}));
-        initDashboard();
-        document.getElementById('loading').style.display = 'none';
-    }
+    const sheetUrl = savedUrl || DEFAULT_SHEET_URL;
+    loadFromGoogleSheets(sheetUrl);
 }
 
 function initDashboard() {
@@ -1668,18 +1676,23 @@ function rankSparkline(data8, sortedWeeks, color, isTotal) {
     const firstX = pad;
     const areaPoints = points.join(' ') + ` ${pad + (w-pad*2)},${h-pad} ${firstX},${h-pad}`;
 
-    // Build hover circles with tooltips (CSS-only hover for instant response)
+    // Build hover circles with CSS custom tooltips (instant, no browser delay)
     let circles = '';
     coords.forEach((c, i) => {
         const weekRank = sortedWeeks.findIndex(sw => sw.start === data8[i].start) + 1;
         const rankText = weekRank > 0 ? weekRank + '위' : '-';
         const shortStart = data8[i].start.slice(5);
         const shortEnd = data8[i].end.slice(5);
-        const tooltip = `${shortStart}~${shortEnd}: ${fmtRankAmt(c.amount)} (${rankText})`;
+        const tipText = `${shortStart}~${shortEnd}: ${fmtRankAmt(c.amount)} (${rankText})`;
         const isLast = i === coords.length - 1;
         const baseFill = isLast ? dotColor : strokeColor;
         const baseR = isLast ? 3.5 : 0;
-        circles += `<circle class="spark-dot${isLast ? ' spark-last' : ''}" cx="${c.x}" cy="${c.y}" r="${baseR}" fill="${baseFill}" opacity="${isLast ? 1 : 0}"><title>${tooltip}</title></circle>`;
+        // Tooltip positioned above the dot
+        const tipY = Math.max(12, c.y - 10);
+        const tipW = tipText.length * 5.8 + 12;
+        const tipX = Math.min(Math.max(tipW / 2 + 2, c.x), w - tipW / 2 - 2);
+        circles += `<circle class="spark-dot${isLast ? ' spark-last' : ''}" cx="${c.x}" cy="${c.y}" r="${baseR}" fill="${baseFill}" opacity="${isLast ? 1 : 0}"/>`;
+        circles += `<g class="spark-tip"><rect x="${tipX - tipW/2}" y="${tipY - 12}" width="${tipW}" height="16" /><text x="${tipX}" y="${tipY}" text-anchor="middle">${tipText}</text></g>`;
     });
 
     return `<svg class="sparkline-svg" width="${w}" height="${h}" style="display:block;margin:6px auto 0;">
@@ -1727,9 +1740,9 @@ function weeklyAmount(data, start, end) {
 
 function rankBadgeHtml(rank, badge, weeksCount) {
     if (rank <= 0) return '';
-    if (rank <= badge.trophy) return `<div class="rank-badge top5" title="🏆 ${weeksCount}주 중 ${badge.trophy}위 이내">🏆</div>`;
-    if (rank <= badge.star) return `<div class="rank-badge top15" title="★ ${weeksCount}주 중 ${badge.star}위 이내">★</div>`;
-    if (rank > badge.warn) return `<div class="rank-badge bottom" title="⚠️ ${weeksCount}주 중 ${badge.warn}위 밖">⚠️</div>`;
+    if (rank <= badge.trophy) return `<div class="rank-badge top5">🏆<span class="badge-tip">🏆 ${weeksCount}주 중 ${badge.trophy}위 이내</span></div>`;
+    if (rank <= badge.star) return `<div class="rank-badge top15">★<span class="badge-tip">★ ${weeksCount}주 중 ${badge.star}위 이내</span></div>`;
+    if (rank > badge.warn) return `<div class="rank-badge bottom">⚠️<span class="badge-tip">⚠️ ${weeksCount}주 중 ${badge.warn}위 밖</span></div>`;
     return '';
 }
 
