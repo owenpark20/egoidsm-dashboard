@@ -140,13 +140,13 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .rank-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
 .rank-header h3 { font-size:15px; font-weight:700; margin:0; }
 .rank-period { font-size:12px; color:var(--text2); background:#f3f4f6; padding:4px 10px; border-radius:12px; }
-.rank-cards { display:grid; grid-template-columns:repeat(5, 1fr); gap:12px; }
+.rank-cards { display:grid; grid-template-columns:repeat(5, 1fr); gap:12px; padding-top:8px; }
 .rank-card { border-radius:10px; padding:16px; text-align:center; position:relative; border:1px solid var(--border); }
 .rank-card.total { background:linear-gradient(135deg, #2d2d3d, #3d3d50); color:white; border:none; }
 .rank-card.total .rank-label { color:rgba(255,255,255,0.8); }
 .rank-card .rank-label { font-size:14px; color:var(--text2); font-weight:600; margin-bottom:6px; }
 .rank-card .rank-value { font-size:27px; font-weight:800; margin-bottom:2px; }
-.rank-card .rank-badge { position:absolute; top:-6px; right:-6px; width:24px; height:24px; border-radius:50%; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.rank-card .rank-badge { position:absolute; top:-6px; right:-6px; width:24px; height:24px; border-radius:50%; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:help; }
 .rank-badge.top5 { background:#fbbf24; color:#78350f; }
 .rank-badge.top15 { background:#a5b4fc; color:#312e81; }
 .rank-badge.bottom { background:#fee2e2; color:#991b1b; }
@@ -356,7 +356,7 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
             <h3>📊 전주 결제액 — 최근 100주 순위 <span id="rank100Arrow" style="font-size:14px;transition:transform 0.3s;">▶</span></h3>
             <span class="rank-period" id="rankPeriod100"></span>
         </div>
-        <div id="rankCards100Wrap" style="display:none;overflow:hidden;transition:all 0.3s;">
+        <div id="rankCards100Wrap" style="display:none;transition:all 0.3s;">
             <div class="rank-cards" id="rankCards100"></div>
         </div>
     </div>
@@ -748,7 +748,7 @@ function applyFilters() {
 // HELPERS
 // ============================================================
 function fmt(n) {
-    if (n >= 1e8) return (n/1e8).toFixed(1) + '억';
+    if (n >= 1e8) return (n/1e8).toFixed(2) + '억';
     if (n >= 1e4) return (n/1e4).toFixed(0) + '만';
     return n.toLocaleString();
 }
@@ -1634,7 +1634,7 @@ function updateFooter() {
 const BRAND_CLR = BRAND_COLORS;
 
 function fmtRankAmt(v) {
-    if (v >= 1e8) return (v/1e8).toFixed(1) + '억원';
+    if (v >= 1e8) return (v/1e8).toFixed(2) + '억원';
     if (v > 0) return Math.round(v/1e4).toLocaleString() + '만원';
     return '-';
 }
@@ -1725,6 +1725,14 @@ function weeklyAmount(data, start, end) {
     return data.filter(r => r.date >= start && r.date <= end).reduce((s, r) => s + r.amount, 0);
 }
 
+function rankBadgeHtml(rank, badge, weeksCount) {
+    if (rank <= 0) return '';
+    if (rank <= badge.trophy) return `<div class="rank-badge top5" title="🏆 ${weeksCount}주 중 ${badge.trophy}위 이내">🏆</div>`;
+    if (rank <= badge.star) return `<div class="rank-badge top15" title="★ ${weeksCount}주 중 ${badge.star}위 이내">★</div>`;
+    if (rank > badge.warn) return `<div class="rank-badge bottom" title="⚠️ ${weeksCount}주 중 ${badge.warn}위 밖">⚠️</div>`;
+    return '';
+}
+
 function renderWeeklyRank(weeksCount, periodElId, cardsElId, badge) {
     if (!RAW_DATA || RAW_DATA.length === 0) return;
 
@@ -1788,7 +1796,7 @@ function renderWeeklyRank(weeksCount, periodElId, cardsElId, badge) {
         <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;">${weeksCount}주 평균 ${fmtRankAmt(totalAvg)}</div>
         ${rankSparkline(totalLast8, totalWeeks, '#fff', true)}
         ${totalAvg8Rank > 0 ? `<div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:3px;">8주 평균 순위 <b>${totalAvg8Rank.toFixed(1)}위</b></div>` : ''}
-        ${totalRank > 0 && totalRank <= badge.trophy ? '<div class="rank-badge top5">🏆</div>' : totalRank <= badge.star ? '<div class="rank-badge top15">★</div>' : totalRank > badge.warn ? '<div class="rank-badge bottom">⚠️</div>' : ''}
+        ${rankBadgeHtml(totalRank, badge, weeksCount)}
     </div>`;
 
     brandRanks.forEach(b => {
@@ -1803,7 +1811,7 @@ function renderWeeklyRank(weeksCount, periodElId, cardsElId, badge) {
             <div style="font-size:11px;color:var(--text2);margin-top:2px;">${weeksCount}주 평균 ${fmtRankAmt(b.avg)}</div>
             ${rankSparkline(bLast8, b.sortedWeeks, color, false)}
             ${bAvg8Rank > 0 ? `<div style="font-size:10px;color:var(--text2);margin-top:3px;">8주 평균 순위 <b>${bAvg8Rank.toFixed(1)}위</b></div>` : ''}
-            ${b.rank > 0 && b.rank <= badge.trophy ? '<div class="rank-badge top5">🏆</div>' : b.rank <= badge.star ? '<div class="rank-badge top15">★</div>' : b.rank > badge.warn ? '<div class="rank-badge bottom">⚠️</div>' : ''}
+            ${rankBadgeHtml(b.rank, badge, weeksCount)}
         </div>`;
     });
 
@@ -2260,7 +2268,7 @@ function runCompare() {
                 x: { grid: { display: false } },
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: function(v) { return v >= 1e8 ? (v/1e8).toFixed(1)+'억' : v >= 1e4 ? (v/1e4).toFixed(0)+'만' : v.toLocaleString(); } },
+                    ticks: { callback: function(v) { return v >= 1e8 ? (v/1e8).toFixed(2)+'억' : v >= 1e4 ? (v/1e4).toFixed(0)+'만' : v.toLocaleString(); } },
                     grid: { color: 'rgba(0,0,0,0.05)' }
                 }
             }
