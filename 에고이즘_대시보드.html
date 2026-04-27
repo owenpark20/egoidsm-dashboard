@@ -894,7 +894,7 @@ function applyFilters() {
 // ============================================================
 function fmt(n) {
     if (n >= 1e8) return (n/1e8).toFixed(2) + '억';
-    if (n >= 1e4) return (n/1e4).toFixed(0) + '만';
+    if (n >= 1e4) return Math.round(n/1e4).toLocaleString() + '만';
     return n.toLocaleString();
 }
 function fmtFull(n) { return n.toLocaleString() + '원'; }
